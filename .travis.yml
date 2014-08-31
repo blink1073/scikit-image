@@ -5,15 +5,9 @@
 
 language: python
 
-
-#  Tthe Travis python is set to 3.2 for all builds, since we use the default python for the 3.2 build and the anaconda python otherwise
-python:
-    - 3.2
-
 env:
     - ENV="python=2.6 numpy=1.6 cython=0.19.2"
     - ENV="python=2.7 numpy cython"
-    - ENV="python=3.2"
     - ENV="python=3.3 numpy cython"
     - ENV="python=3.4 numpy cython"
 
