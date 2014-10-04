@@ -5,17 +5,12 @@
 
 language: python
 
-
-#  Tthe Travis python is set to 3.2 for all builds, since we use the default python for the 3.2 build and the anaconda python otherwise
 python:
+    - 2.6
+    - 2.7
     - 3.2
-
-env:
-    - ENV="python=2.6 numpy=1.6 cython=0.19.2"
-    - ENV="python=2.7 numpy cython"
-    - ENV="python=3.2"
-    - ENV="python=3.3 numpy cython"
-    - ENV="python=3.4 numpy cython"
+    - 3.3
+    - 3.4
 
 virtualenv:
     system_site_packages: true
@@ -26,33 +21,23 @@ before_install:
     - sh -e /etc/init.d/xvfb start
     - sudo apt-get update
 
-    # Python 3.2 is not supported by Miniconda, so we use the package manager for that run.
-    # NumPy has a bug in python 3 that is only fixed in the latest version,
-    #  hence the below wget of numpy/_import_tools.py from github.
-    - if [[ $ENV == python=3.2 ]]; then
-        sudo apt-get install python3-numpy;
-        wget https://raw.githubusercontent.com/numpy/numpy/master/numpy/_import_tools.py -O /home/travis/virtualenv/python3.2_with_system_site_packages/lib/python3.2/site-packages/numpy/_import_tools.py;
-        sudo apt-get install python3-scipy;
-        travis_retry pip install cython flake8 six;
-      else
-        wget http://repo.continuum.io/miniconda/Miniconda-latest-Linux-x86_64.sh -O miniconda.sh;
-        bash miniconda.sh -b -p $HOME/miniconda;
-        export PATH="$HOME/miniconda/bin:$PATH";
-        hash -r;
-        conda config --set always_yes yes;
-        conda update conda;
-        conda info -a;
-        travis_retry conda create -n test $ENV six scipy pip flake8 nose;
-        source activate test;
-      fi
-    - travis_retry pip install coveralls pillow
+    - travis_retry pip install wheel flake8 coveralls
+    - travis_retry pip install --no-index --find-links=http://wheels.scikit-image.org/ -r requirements.txt
     - python check_bento_build.py
+
 
 install:
     - tools/header.py "Dependency versions"
     - tools/build_versions.py
     - export PYTHONWARNINGS=all
     - python setup.py build_ext --inplace
+
+    # Matplotlib settings
+    - export MPL_DIR=$HOME/.config/matplotlib
+    - mkdir -p $MPL_DIR
+    - touch $MPL_DIR/matplotlibrc
+    - "echo 'backend : Agg' > $MPL_DIR/matplotlibrc"
+    - "echo 'backend.qt4 : PySide' >> $MPL_DIR/matplotlibrc"
 
 script:
     # Run all tests with minimum dependencies
@@ -65,38 +50,19 @@ script:
 
     - echo -e $SPACER
 
-    # Install optional dependencies to get full test coverage
-    # Notes:
+    - travis_retry pip install networkx
+    - travis_retry pip install --no-index --find-links=http://wheels.scikit-image.org/ PySide
+
     # - pyfits and imread do NOT support py3.2
-    # - Use the png headers included in anaconda (from matplotlib install)
-    # TODO: Remove the libm removal when anaconda fixes their libraries
-    #   The solution was suggested here
-    #   https://groups.google.com/a/continuum.io/forum/#!topic/anaconda/-DLG2ZdTkw0
-    - if [[ $ENV == python=3.2 ]]; then
-        travis_retry sudo apt-get install python3-pyqt4;
-        travis_retry pip install matplotlib==1.3.1;
-        travis_retry pip install networkx;
-      else
-        travis_retry conda install matplotlib pyqt networkx;
-        sudo cp ~/miniconda/envs/test/include/png* /usr/include;
-        rm ~/miniconda/envs/test/lib/libm-2.5.so;
-        rm ~/miniconda/envs/test/lib/libm.*;
+    - if [[  $TRAVIS_PYTHON_VERSION != 3.2 ]]; then
         sudo apt-get install libtiff4-dev libwebp-dev xcftools;
         travis_retry pip install imread;
         travis_retry pip install pyfits;
       fi
-    - sudo apt-get install libfreeimage3
     # TODO: update when SimpleITK become available on py34 or hopefully pip
-    - if [[ $ENV != python=3.4* ]]; then
+    - if [[  $TRAVIS_PYTHON_VERSION != 3.4 ]]; then
         travis_retry easy_install SimpleITK;
       fi
-
-    # Matplotlib settings
-    - export MPL_DIR=$HOME/.config/matplotlib
-    - mkdir -p $MPL_DIR
-    - touch $MPL_DIR/matplotlibrc
-    - "echo 'backend : Agg' > $MPL_DIR/matplotlibrc"
-    - "echo 'backend.qt4 : PyQt4' >> $MPL_DIR/matplotlibrc"
 
     - echo -e $SPACER
 
@@ -109,13 +75,11 @@ script:
 
     # run tests again with optional dependencies to get more coverage
     # measure coverage on py3.3
-    - if [[ $ENV == python=3.3* ]]; then
+    - if [[ $TRAVIS_PYTHON_VERSION == 3.3 ]]; then
          nosetests --exe -v --with-doctest --with-cov --cover-package skimage;
       else
          nosetests --exe -v --with-doctest skimage;
       fi
 
 after_success:
-    - if [[ $ENV == python=3.3* ]]; then
-          coveralls;
-      fi
+    - coveralls;
