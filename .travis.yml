@@ -12,16 +12,26 @@ python:
     - 3.3
     - 3.4
 
+virtualenv:
+  system_site_packages: true
+
+env:
+    WHEELHOUSE="--no-index --find-links=http://wheels.scikit-image.org/"
+
 before_install:
     - export DISPLAY=:99.0
     - export SPACER="\n\n\n\n\n\n\n\n\n\n*************************\n\n"
     - sh -e /etc/init.d/xvfb start
     - sudo apt-get update
 
-    - travis_retry pip install wheel flake8 coveralls nose
-    - travis_retry pip install --no-index --find-links=http://wheels.scikit-image.org/ -r requirements.txt
-    # install Pillow for now
-    - travis_retry pip install --no-index --find-links=http://wheels.scikit-image.org/ Pillow
+    - travis_retry pip install wheel flake8 coveralls nose six
+    # on Python 2.7, use the system versions of numpy, scipy, and matplotlib
+    -  if [[  $TRAVIS_PYTHON_VERSION == 2.7 ]]; then
+        travis_retry sudo apt-get install python-scipy python-matplotlib;
+        travis_retry pip install pillow cython $WHEELHOUSE;
+    else
+        travis_retry pip install  -r requirements.txt $WHEELHOUSE;
+     fi
     - python check_bento_build.py
 
 
@@ -51,7 +61,7 @@ script:
 
     - travis_retry pip install networkx
     - sudo apt-get install libqt4-dev
-    - travis_retry pip install PySide --no-index --find-links=http://wheels.scikit-image.org/
+    - travis_retry pip install PySide $WHEELHOUSE
     - python ~/virtualenv/python${TRAVIS_PYTHON_VERSION}/bin/pyside_postinstall.py -install
 
 
