@@ -27,13 +27,12 @@ before_install:
     - travis_retry pip install wheel flake8 coveralls nose six
     # on Python 2.7, use the system versions of numpy, scipy, and matplotlib
     -  if [[  $TRAVIS_PYTHON_VERSION == 2.7 ]]; then
-        travis_retry sudo apt-get install python-scipy python-matplotlib;
-        travis_retry pip install pillow cython $WHEELHOUSE;
-    else
-        travis_retry pip install  -r requirements.txt $WHEELHOUSE;
+                 travis_retry sudo apt-get install python-scipy python-matplotlib;
+            travis_retry pip install pillow cython $WHEELHOUSE;
+     else
+            travis_retry pip install  -r requirements.txt $WHEELHOUSE;
      fi
     - python check_bento_build.py
-
 
 install:
     - tools/header.py "Dependency versions"
