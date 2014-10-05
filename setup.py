@@ -31,8 +31,8 @@ from distutils.command.build_py import build_py
 # These are manually checked.
 # These packages are sometimes installed outside of the setuptools scope
 DEPENDENCIES = {}
-with open('requirements.txt') as fid:
-    data = fid.read()
+with open('requirements.txt', 'rb') as fid:
+    data = fid.read().decode('utf-8', 'replace')
 for line in data.splitlines():
     pkg, _, version_info = line.partition('>=')
     # Only require Cython if we have a developer checkout
@@ -44,7 +44,7 @@ for line in data.splitlines():
                 version.append(int(part))
             except ValueError:
                 pass
-    DEPENDENCIES[pkg.lower()] = version
+    DEPENDENCIES[str(pkg.lower())] = tuple(version)
 
 
 def configuration(parent_package='', top_path=None):
@@ -80,38 +80,43 @@ version='%s'
 
 
 def get_package_version(package):
-    version = []
     for version_attr in ('version', 'VERSION', '__version__'):
-        if hasattr(package, version_attr) \
-                and isinstance(getattr(package, version_attr), str):
-            version_info = getattr(package, version_attr, '')
-            for part in re.split('\D+', version_info):
-                try:
-                    version.append(int(part))
-                except ValueError:
-                    pass
-    return tuple(version)
+        version_info = getattr(package, version_attr, None)
+        try:
+            parts = re.split('\D+', version_info)
+        except TypeError:
+            continue
+        version = []
+        for part in parts:
+            try:
+                version.append(int(part))
+            except ValueError:
+                pass
 
+        return tuple(version)
 
 def check_requirements():
     if sys.version_info < PYTHON_VERSION:
         raise SystemExit('You need Python version %d.%d or later.' \
                          % PYTHON_VERSION)
-
     for package_name, min_version in DEPENDENCIES.items():
+        if package_name == 'cython':
+            package_name = 'Cython'
         dep_error = False
+        if package_name.lower() == 'pillow':
+            package_name = 'PIL.Image'
         try:
-            package = __import__(package_name)
+            package = __import__(package_name,
+                fromlist=[package_name.split('.')[-1]])
         except ImportError:
             dep_error = True
         else:
             package_version = get_package_version(package)
-            if tuple(min_version) > package_version:
+            if min_version > package_version:
                 dep_error = True
-
         if dep_error:
-            raise ImportError('You need `%s` version %d.%d or later.' \
-                              % ((package_name, ) + min_version))
+            raise ImportError('You need `%s` version %s or later.' \
+                              % (package_name, '.'.join(str(i) for i in min_version)))
 
 
 if __name__ == "__main__":
