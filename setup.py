@@ -106,7 +106,7 @@ def check_requirements():
             dep_error = True
         else:
             package_version = get_package_version(package)
-            if min_version > package_version:
+            if tuple(min_version) > package_version:
                 dep_error = True
 
         if dep_error:
