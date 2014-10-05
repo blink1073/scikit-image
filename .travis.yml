@@ -50,7 +50,10 @@ script:
     - echo -e $SPACER
 
     - travis_retry pip install networkx
-    - travis_retry pip install --no-index --find-links=http://wheels.scikit-image.org/ PySide
+    - sudo apt-get install libqt4-dev
+    - travis_retry pip install PySide --no-index --find-links=http://wheels.scikit-image.org/
+  # Travis CI servers use virtualenvs, so we need to finish the install by the following
+  - python ~/virtualenv/python${TRAVIS_PYTHON_VERSION}/bin/pyside_postinstall.py -install
 
     # - pyfits and imread do NOT support py3.2
     - if [[  $TRAVIS_PYTHON_VERSION != 3.2 ]]; then
