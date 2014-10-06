@@ -53,10 +53,6 @@ script:
     - travis_retry pip install PySide $WHEELHOUSE
     - python ~/virtualenv/python${TRAVIS_PYTHON_VERSION}/bin/pyside_postinstall.py -install
 
-    # resinstall matplotlib with pyqt support
-    - pip uninstall matplotlib
-     - travis_retry pip install matplotlib $WHEELHOUSE
-
     # Matplotlib settings - must be after we install Pyside
     - export MPL_DIR=$HOME/.config/matplotlib
     - mkdir -p $MPL_DIR
@@ -74,7 +70,7 @@ script:
         travis_retry easy_install SimpleITK;
       fi
       - travis_retry pip install --no-deps astropy
-      # pyamg only supports Py2.6 and Py2.7
+
       - if [[ $TRAVIS_PYTHON_VERSION == 2.* ]]; then
          travis_retry pip install pyamg;
        fi
