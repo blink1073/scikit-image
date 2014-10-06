@@ -7,13 +7,10 @@ language: python
 
 python:
     - 2.6
-    - 2.7
+    - "2.7_with_system_site_packages"
     - 3.2
     - 3.3
     - 3.4
-
-virtualenv:
-  system_site_packages: true
 
 env:
     WHEELHOUSE="--no-index --find-links=http://wheels.scikit-image.org/"
@@ -26,7 +23,7 @@ before_install:
 
     - travis_retry pip install wheel flake8 coveralls nose six
     # on Python 2.7, use the system versions of numpy, scipy, and matplotlib
-    -  if [[  $TRAVIS_PYTHON_VERSION == 2.7 ]]; then
+    -  if [[  $TRAVIS_PYTHON_VERSION == 2.7* ]]; then
                  travis_retry sudo apt-get install python-scipy python-matplotlib;
             travis_retry pip install pillow cython $WHEELHOUSE;
      else
