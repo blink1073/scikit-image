@@ -130,7 +130,7 @@ markers[coins < 30] = 1
 markers[coins > 150] = 2
 
 fig, ax = plt.subplots(figsize=(4, 3))
-ax.imshow(markers, cmap=plt.cm.spectral, interpolation='nearest')
+ax.imshow(markers, cmap=plt.cm.nipy_spectral, interpolation='nearest')
 ax.axis('off')
 ax.set_title('markers')
 

@@ -43,10 +43,10 @@ fig, axes = plt.subplots(ncols=4, figsize=(8, 2.7))
 ax0, ax1, ax2, ax3 = axes
 
 ax0.imshow(image, cmap=plt.cm.gray, interpolation='nearest')
-ax1.imshow(gradient, cmap=plt.cm.spectral, interpolation='nearest')
-ax2.imshow(markers, cmap=plt.cm.spectral, interpolation='nearest')
+ax1.imshow(gradient, cmap=plt.cm.nipy_spectral, interpolation='nearest')
+ax2.imshow(markers, cmap=plt.cm.nipy_spectral, interpolation='nearest')
 ax3.imshow(image, cmap=plt.cm.gray, interpolation='nearest')
-ax3.imshow(labels, cmap=plt.cm.spectral, interpolation='nearest', alpha=.7)
+ax3.imshow(labels, cmap=plt.cm.nipy_spectral, interpolation='nearest', alpha=.7)
 
 for ax in axes:
     ax.axis('off')

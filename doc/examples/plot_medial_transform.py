@@ -58,7 +58,7 @@ dist_on_skel = distance * skel
 fig, (ax1, ax2) = plt.subplots(1, 2, figsize=(8, 4))
 ax1.imshow(data, cmap=plt.cm.gray, interpolation='nearest')
 ax1.axis('off')
-ax2.imshow(dist_on_skel, cmap=plt.cm.spectral, interpolation='nearest')
+ax2.imshow(dist_on_skel, cmap=plt.cm.nipy_spectral, interpolation='nearest')
 ax2.contour(data, [0.5], colors='w')
 ax2.axis('off')
 

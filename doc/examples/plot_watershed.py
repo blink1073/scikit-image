@@ -55,7 +55,7 @@ ax0.imshow(image, cmap=plt.cm.gray, interpolation='nearest')
 ax0.set_title('Overlapping objects')
 ax1.imshow(-distance, cmap=plt.cm.jet, interpolation='nearest')
 ax1.set_title('Distances')
-ax2.imshow(labels, cmap=plt.cm.spectral, interpolation='nearest')
+ax2.imshow(labels, cmap=plt.cm.nipy_spectral, interpolation='nearest')
 ax2.set_title('Separated objects')
 
 for ax in axes:
