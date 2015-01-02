@@ -70,7 +70,7 @@ ax2.imshow(img, cmap=plt.cm.gray)
 ax2.set_title('Original image')
 ax2.axis('off')
 
-ax3.imshow(edge_scharr - edge_sobel, cmap=plt.cm.jet)
+ax3.imshow(edge_scharr - edge_sobel, cmap=plt.cm.gray)
 ax3.set_title('difference (Scharr - Sobel)')
 ax3.axis('off')
 

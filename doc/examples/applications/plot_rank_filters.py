@@ -524,7 +524,7 @@ fig.colorbar(ax1.imshow(image, cmap=plt.cm.gray), ax=ax1)
 ax1.set_title('Image')
 ax1.axis('off')
 
-fig.colorbar(ax2.imshow(entropy(image, disk(5)), cmap=plt.cm.jet), ax=ax2)
+fig.colorbar(ax2.imshow(entropy(image, disk(5)), cmap=plt.cm.gray), ax=ax2)
 ax2.set_title('Entropy')
 ax2.axis('off')
 
