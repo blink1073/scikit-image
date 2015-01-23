@@ -4,12 +4,11 @@ import numpy as np
 from numpy.testing import assert_equal
 from numpy.testing.decorators import skipif
 from skimage import data
-from skimage.viewer import ImageViewer, viewer_available
+from skimage.viewer import ImageViewer, has_qt
 from skimage.viewer.canvastools import (
     LineTool, ThickLineTool, RectangleTool, PaintTool)
 from skimage.viewer.canvastools.base import CanvasToolBase
-from numpy.testing import assert_equal
-from numpy.testing.decorators import skipif
+from matplotlib.testing.decorators import cleanup
 
 
 def get_end_points(image):
@@ -74,7 +73,8 @@ def do_event(viewer, etype, button=1, xdata=0, ydata=0, key=None):
     func(event)
 
 
-@skipif(not viewer_available)
+@cleanup
+@skipif(not has_qt)
 def test_line_tool():
     img = data.camera()
     viewer = ImageViewer(img)
@@ -99,7 +99,8 @@ def test_line_tool():
     assert_equal(tool.geometry, np.array([[100, 100], [10, 10]]))
 
 
-@skipif(not viewer_available)
+@cleanup
+@skipif(not has_qt)
 def test_thick_line_tool():
     img = data.camera()
     viewer = ImageViewer(img)
@@ -122,7 +123,8 @@ def test_thick_line_tool():
     assert_equal(tool.linewidth, 1)
 
 
-@skipif(not viewer_available)
+@cleanup
+@skipif(not has_qt)
 def test_rect_tool():
     img = data.camera()
     viewer = ImageViewer(img)
@@ -150,7 +152,8 @@ def test_rect_tool():
     assert_equal(tool.geometry, [10, 100,  10, 100])
 
 
-@skipif(not viewer_available)
+@cleanup
+@skipif(not has_qt)
 def test_paint_tool():
     img = data.moon()
     viewer = ImageViewer(img)
@@ -183,7 +186,8 @@ def test_paint_tool():
     assert_equal(tool.overlay.sum(), 0)
 
 
-@skipif(not viewer_available)
+@cleanup
+@skipif(not has_qt)
 def test_base_tool():
     img = data.moon()
     viewer = ImageViewer(img)

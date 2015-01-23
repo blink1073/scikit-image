@@ -10,10 +10,10 @@ from scipy.sparse import linalg
 
 
 def cut_threshold(labels, rag, thresh, in_place=True):
-    """Combine regions seperated by weight less than threshold.
+    """Combine regions separated by weight less than threshold.
 
     Given an image's labels and its RAG, output new labels by
-    combining regions whose nodes are seperated by a weight less
+    combining regions whose nodes are separated by a weight less
     than the given threshold.
 
     Parameters
@@ -38,7 +38,7 @@ def cut_threshold(labels, rag, thresh, in_place=True):
     Examples
     --------
     >>> from skimage import data, graph, segmentation
-    >>> img = data.lena()
+    >>> img = data.astronaut()
     >>> labels = segmentation.slic(img)
     >>> rag = graph.rag_mean_color(img, labels)
     >>> new_labels = graph.cut_threshold(labels, rag, 10)
@@ -108,7 +108,7 @@ def cut_normalized(labels, rag, thresh=0.001, num_cuts=10, in_place=True,
     Examples
     --------
     >>> from skimage import data, graph, segmentation
-    >>> img = data.lena()
+    >>> img = data.astronaut()
     >>> labels = segmentation.slic(img, compactness=30, n_segments=400)
     >>> rag = graph.rag_mean_color(img, labels, mode='similarity')
     >>> new_labels = graph.cut_normalized(labels, rag)
@@ -228,7 +228,7 @@ def _ncut_relabel(rag, thresh, num_cuts):
     """Perform Normalized Graph cut on the Region Adjacency Graph.
 
     Recursively partition the graph into 2, until further subdivision
-    yields a cut greather than `thresh` or such a cut cannot be computed.
+    yields a cut greater than `thresh` or such a cut cannot be computed.
     For such a subgraph, indices to labels of all its nodes map to a single
     unique value.
 

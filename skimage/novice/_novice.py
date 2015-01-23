@@ -80,6 +80,7 @@ class Pixel(object):
         Transparency component (0-255), 255 (opaque) by default
 
     """
+
     def __init__(self, pic, array, x, y, rgb, alpha=255):
         self._picture = pic
         self._x = x
@@ -239,6 +240,7 @@ class Picture(object):
     >>> pic[:, pic.height-1] = (255, 0, 0)
 
     """
+
     def __init__(self, path=None, array=None, xy_array=None):
         self._modified = False
         self.scale = 1
@@ -351,8 +353,9 @@ class Picture(object):
         if (value[0] != self.width) or (value[1] != self.height):
             # skimage dimensions are flipped: y, x
             new_size = (int(value[1]), int(value[0]))
-            new_array = resize(self.array, new_size, order=0)
-            self.array = img_as_ubyte(new_array)
+            new_array = resize(self.array, new_size, order=0,
+                               preserve_range=True)
+            self.array = new_array.astype(np.uint8)
 
             self._array_modified()
 

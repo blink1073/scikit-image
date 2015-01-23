@@ -1,13 +1,30 @@
-from .lpi_filter import inverse, wiener, LPIFilter2D
-from ._gaussian import gaussian_filter
-from .edges import (sobel, hsobel, vsobel, scharr, hscharr, vscharr, prewitt,
-                    hprewitt, vprewitt, roberts, roberts_positive_diagonal,
-                    roberts_negative_diagonal)
-from ._rank_order import rank_order
-from ._gabor import gabor_kernel, gabor_filter
-from .thresholding import (threshold_adaptive, threshold_otsu, threshold_yen,
+from skimage._shared.utils import skimage_deprecation
+from warnings import warn
+
+global _import_warned
+
+warn(skimage_deprecation('The `skimage.filter` module has been renamed '
+                         'to `skimage.filters`.  This placeholder module '
+                         'will be removed in v0.13.'))
+_import_warned = True
+
+del warn
+del skimage_deprecation
+
+from ..filters.lpi_filter import inverse, wiener, LPIFilter2D
+from ..filters._gaussian import gaussian_filter
+from ..filters.edges import (sobel, hsobel, vsobel, sobel_h, sobel_v,
+                    scharr, hscharr, vscharr, scharr_h, scharr_v,
+                    prewitt, hprewitt, vprewitt, prewitt_h, prewitt_v,
+                    roberts, roberts_positive_diagonal,
+                    roberts_negative_diagonal, roberts_pos_diag,
+                    roberts_neg_diag)
+from ..filters._rank_order import rank_order
+from ..filters._gabor import gabor_kernel, gabor_filter
+from ..filters.thresholding import (threshold_adaptive, threshold_otsu, threshold_yen,
                            threshold_isodata)
-from . import rank
+from ..filters import rank
+from ..filters.rank import median
 
 from skimage._shared.utils import deprecated
 from skimage import restoration
@@ -30,19 +47,28 @@ __all__ = ['inverse',
            'wiener',
            'LPIFilter2D',
            'gaussian_filter',
+           'median',
            'canny',
            'sobel',
            'hsobel',
            'vsobel',
+           'sobel_h',
+           'sobel_v',
            'scharr',
            'hscharr',
            'vscharr',
+           'scharr_h',
+           'scharr_v',
            'prewitt',
            'hprewitt',
            'vprewitt',
+           'prewitt_h',
+           'prewitt_v',
            'roberts',
            'roberts_positive_diagonal',
            'roberts_negative_diagonal',
+           'roberts_pos_diag',
+           'roberts_neg_diag',
            'denoise_tv_chambolle',
            'denoise_bilateral',
            'denoise_tv_bregman',

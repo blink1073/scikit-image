@@ -1,10 +1,6 @@
 # coding: utf-8
 import numpy as np
-
-
-def _coords_inside_image(rr, cc, shape):
-    mask = (rr >= 0) & (rr < shape[0]) & (cc >= 0) & (cc < shape[1])
-    return rr[mask], cc[mask]
+from ._draw import _coords_inside_image
 
 
 def _ellipse_in_shape(shape, center, radiuses):
@@ -26,9 +22,9 @@ def ellipse(cy, cx, yradius, xradius, shape=None):
     yradius, xradius : double
         Minor and major semi-axes. ``(x/xradius)**2 + (y/yradius)**2 = 1``.
     shape : tuple, optional
-        Image shape which is used to determine maximum extents of output pixel
+        Image shape which is used to determine the maximum extent of output pixel
         coordinates. This is useful for ellipses which exceed the image size.
-        By default the full extents of the ellipse are used.
+        By default the full extent of the ellipse are used.
 
     Returns
     -------
@@ -89,9 +85,9 @@ def circle(cy, cx, radius, shape=None):
     radius: double
         Radius of circle.
     shape : tuple, optional
-        Image shape which is used to determine maximum extents of output pixel
+        Image shape which is used to determine the maximum extent of output pixel
         coordinates. This is useful for circles which exceed the image size.
-        By default the full extents of the circle are used.
+        By default the full extent of the circle are used.
 
     Returns
     -------
