@@ -3,6 +3,7 @@ from numpy.testing import assert_equal, assert_raises, assert_almost_equal
 from skimage.measure import LineModel, CircleModel, EllipseModel, ransac
 from skimage.transform import AffineTransform
 from skimage.measure.fit import _dynamic_max_trials
+from skimage._shared._warnings import expected_warnings
 
 
 def test_line_model_invalid_input():
@@ -180,7 +181,7 @@ def test_ransac_geometric():
     model_est, inliers = ransac((src, dst), AffineTransform, 2, 20)
 
     # test whether estimated parameters equal original parameters
-    assert_almost_equal(model0._matrix, model_est._matrix)
+    assert_almost_equal(model0.params, model_est.params)
     assert np.all(np.nonzero(inliers == False)[0] == outliers)
 
 
@@ -238,16 +239,12 @@ def test_ransac_dynamic_max_trials():
 
 
 def test_ransac_invalid_input():
-    assert_raises(ValueError, ransac, np.zeros((10, 2)), None, min_samples=-1,
-                                     residual_threshold=0)
     assert_raises(ValueError, ransac, np.zeros((10, 2)), None, min_samples=2,
-                                     residual_threshold=0, max_trials=-1)
+                  residual_threshold=0, max_trials=-1)
     assert_raises(ValueError, ransac, np.zeros((10, 2)), None, min_samples=2,
-                                     residual_threshold=0,
-                                     stop_probability=-1)
+                  residual_threshold=0, stop_probability=-1)
     assert_raises(ValueError, ransac, np.zeros((10, 2)), None, min_samples=2,
-                                     residual_threshold=0,
-                                     stop_probability=1.01)
+                  residual_threshold=0, stop_probability=1.01)
 
 
 def test_deprecated_params_attribute():
@@ -255,7 +252,8 @@ def test_deprecated_params_attribute():
     model.params = (10, 1)
     x = np.arange(-10, 10)
     y = model.predict_y(x)
-    assert_equal(model.params, model._params)
+    with expected_warnings(['`_params`']):
+        assert_equal(model.params, model._params)
 
 
 if __name__ == "__main__":

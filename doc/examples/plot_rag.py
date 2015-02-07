@@ -14,7 +14,7 @@ The example below also shows how to use a custom function to select the larger
 weight instead.
 
 """
-from skimage.graph import rag
+from skimage.future.graph import rag
 import networkx as nx
 from matplotlib import pyplot as plt
 import numpy as np
@@ -31,7 +31,7 @@ def max_edge(g, src, dst, n):
     g : RAG
         The graph under consideration.
     src, dst : int
-        The verices in `g` to be merged.
+        The vertices in `g` to be merged.
     n : int
         A neighbor of `src` or `dst` or both.
 
@@ -75,7 +75,7 @@ display(g, "Original Graph")
 g.merge_nodes(1, 3)
 display(g, "Merged with default (min)")
 
-gc.merge_nodes(1, 3, weight_func=max_edge)
-display(gc, "Merged with max")
+gc.merge_nodes(1, 3, weight_func=max_edge, in_place=False)
+display(gc, "Merged with max without in_place")
 
 plt.show()

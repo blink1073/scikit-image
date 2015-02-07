@@ -5,11 +5,11 @@ import itertools as itt
 import math
 from math import sqrt, hypot, log
 from numpy import arccos
-from skimage.util import img_as_float
+from ..util import img_as_float
 from .peak import peak_local_max
 from ._hessian_det_appx import _hessian_matrix_det
-from skimage.transform import integral_image
-from skimage._shared.utils import assert_nD
+from ..transform import integral_image
+from .._shared.utils import assert_nD
 
 
 # This basic blob detection algorithm is based on:
@@ -53,8 +53,14 @@ def _blob_overlap(blob1, blob2):
     if d <= abs(r1 - r2):
         return 1
 
-    acos1 = arccos((d ** 2 + r1 ** 2 - r2 ** 2) / (2 * d * r1))
-    acos2 = arccos((d ** 2 + r2 ** 2 - r1 ** 2) / (2 * d * r2))
+    ratio1 = (d ** 2 + r1 ** 2 - r2 ** 2) / (2 * d * r1)
+    ratio1 = np.clip(ratio1, -1, 1)
+    acos1 = arccos(ratio1)
+
+    ratio2 = (d ** 2 + r2 ** 2 - r1 ** 2) / (2 * d * r2)
+    ratio2 = np.clip(ratio2, -1, 1)
+    acos2 = arccos(ratio2)
+
     a = -d + r2 + r1
     b = d - r2 + r1
     c = d + r2 - r1
@@ -179,7 +185,7 @@ def blob_dog(image, min_sigma=1, max_sigma=50, sigma_ratio=1.6, threshold=2.0,
 
     # a geometric progression of standard deviations for gaussian kernels
     sigma_list = np.array([min_sigma * (sigma_ratio ** i)
-                          for i in range(k + 1)])
+                           for i in range(k + 1)])
 
     gaussian_images = [gaussian_filter(image, s) for s in sigma_list]
 

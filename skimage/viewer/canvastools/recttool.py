@@ -1,10 +1,6 @@
-try:
-    from matplotlib.widgets import RectangleSelector
-except ImportError:
-    RectangleSelector = object
-
-from skimage.viewer.canvastools.base import CanvasToolBase
-from skimage.viewer.canvastools.base import ToolHandles
+from matplotlib.widgets import RectangleSelector
+from ...viewer.canvastools.base import CanvasToolBase
+from ...viewer.canvastools.base import ToolHandles
 
 
 __all__ = ['RectangleTool']
@@ -37,20 +33,54 @@ class RectangleTool(CanvasToolBase, RectangleSelector):
     ----------
     extents : tuple
         Rectangle extents: (xmin, xmax, ymin, ymax).
+
+    Examples
+    ----------
+    >>> from skimage import data
+    >>> from skimage.viewer import ImageViewer
+    >>> from skimage.viewer.canvastools import RectangleTool
+    >>> from skimage.draw import line
+    >>> from skimage.draw import set_color
+
+    >>> viewer = ImageViewer(data.coffee())  # doctest: +SKIP
+
+    >>> def print_the_rect(extents):
+    ...     global viewer
+    ...     im = viewer.image
+    ...     coord = np.int64(extents)
+    ...     [rr1, cc1] = line(coord[2],coord[0],coord[2],coord[1])
+    ...     [rr2, cc2] = line(coord[2],coord[1],coord[3],coord[1])
+    ...     [rr3, cc3] = line(coord[3],coord[1],coord[3],coord[0])
+    ...     [rr4, cc4] = line(coord[3],coord[0],coord[2],coord[0])
+    ...     set_color(im, (rr1, cc1), [255, 255, 0])
+    ...     set_color(im, (rr2, cc2), [0, 255, 255])
+    ...     set_color(im, (rr3, cc3), [255, 0, 255])
+    ...     set_color(im, (rr4, cc4), [0, 0, 0])
+    ...     viewer.image=im
+
+    >>> rect_tool = RectangleTool(viewer.ax, on_enter=print_the_rect) # doctest: +SKIP
+    >>> viewer.show() # doctest: +SKIP
     """
 
     def __init__(self, viewer, on_move=None, on_release=None, on_enter=None,
                  maxdist=10, rect_props=None):
-        CanvasToolBase.__init__(self, viewer, on_move=on_move,
-                                on_enter=on_enter, on_release=on_release)
-
+        self._rect = None
         props = dict(edgecolor=None, facecolor='r', alpha=0.15)
         props.update(rect_props if rect_props is not None else {})
         if props['edgecolor'] is None:
             props['edgecolor'] = props['facecolor']
-        RectangleSelector.__init__(self, self.ax, lambda *args: None,
+        RectangleSelector.__init__(self, viewer.ax, lambda *args: None,
                                    rectprops=props)
-        self.disconnect_events()  # events are handled by the viewer
+        CanvasToolBase.__init__(self, viewer, on_move=on_move,
+                                on_enter=on_enter, on_release=on_release)
+
+        # Events are handled by the viewer
+        try:
+            self.disconnect_events()
+        except AttributeError:
+            # disconnect the events manually (hack for older mpl versions)
+            [self.canvas.mpl_disconnect(i) for i in range(10)]
+
         # Alias rectangle attribute, which is initialized in RectangleSelector.
         self._rect = self.to_draw
         self._rect.set_animated(True)
@@ -81,6 +111,8 @@ class RectangleTool(CanvasToolBase, RectangleSelector):
 
     @property
     def _rect_bbox(self):
+        if not self._rect:
+            return 0, 0, 0, 0
         x0 = self._rect.get_x()
         y0 = self._rect.get_y()
         width = self._rect.get_width()
@@ -202,8 +234,8 @@ class RectangleTool(CanvasToolBase, RectangleSelector):
 
 
 if __name__ == '__main__':  # pragma: no cover
-    from skimage.viewer import ImageViewer
-    from skimage import data
+    from ...viewer import ImageViewer
+    from ... import data
 
     viewer = ImageViewer(data.camera())
 

@@ -3,7 +3,7 @@ Methods to characterize image textures.
 """
 
 import numpy as np
-from skimage._shared.utils import assert_nD
+from .._shared.utils import assert_nD
 from ._texture import _glcm_loop, _local_binary_pattern
 
 
@@ -11,7 +11,7 @@ def greycomatrix(image, distances, angles, levels=256, symmetric=False,
                  normed=False):
     """Calculate the grey-level co-occurrence matrix.
 
-    A grey level co-occurence matrix is a histogram of co-occuring
+    A grey level co-occurrence matrix is a histogram of co-occurring
     greyscale values at a given offset over an image.
 
     Parameters

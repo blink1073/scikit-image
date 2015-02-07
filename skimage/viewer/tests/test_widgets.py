@@ -1,13 +1,16 @@
 
 import os
-from skimage import data, img_as_float, io
-from skimage.viewer import ImageViewer, viewer_available
+from skimage import data, img_as_float, io, img_as_uint
+
+from skimage.viewer import ImageViewer
+from skimage.viewer.qt import QtGui, QtCore, has_qt
 from skimage.viewer.widgets import (
     Slider, OKCancelButtons, SaveButtons, ComboBox, CheckBox, Text)
 from skimage.viewer.plugins.base import Plugin
-from skimage.viewer.qt import QtGui, QtCore
+
 from numpy.testing import assert_almost_equal, assert_equal
 from numpy.testing.decorators import skipif
+from skimage._shared._warnings import expected_warnings
 
 
 def get_image_viewer():
@@ -17,7 +20,7 @@ def get_image_viewer():
     return viewer
 
 
-@skipif(not viewer_available)
+@skipif(not has_qt)
 def test_check_box():
     viewer = get_image_viewer()
     cb = CheckBox('hello', value=True, alignment='left')
@@ -27,12 +30,12 @@ def test_check_box():
     cb.val = False
     assert_equal(cb.val, False)
     cb.val = 1
-    assert_equal(cb.val, True) 
+    assert_equal(cb.val, True)
     cb.val = 0
     assert_equal(cb.val, False)
-    
 
-@skipif(not viewer_available)
+
+@skipif(not has_qt)
 def test_combo_box():
     viewer = get_image_viewer()
     cb = ComboBox('hello', ('a', 'b', 'c'))
@@ -45,7 +48,7 @@ def test_combo_box():
     assert_equal(cb.index, 2)
 
 
-@skipif(not viewer_available)
+@skipif(not has_qt)
 def test_text_widget():
     viewer = get_image_viewer()
     txt = Text('hello', 'hello, world!')
@@ -56,7 +59,7 @@ def test_text_widget():
     assert_equal(str(txt.text), 'goodbye, world!')
 
 
-@skipif(not viewer_available)
+@skipif(not has_qt)
 def test_slider_int():
     viewer = get_image_viewer()
     sld = Slider('radius', 2, 10, value_type='int')
@@ -70,7 +73,7 @@ def test_slider_int():
     assert_equal(sld.val, 5)
 
 
-@skipif(not viewer_available)
+@skipif(not has_qt)
 def test_slider_float():
     viewer = get_image_viewer()
     sld = Slider('alpha', 2.1, 3.1, value=2.1, value_type='float',
@@ -85,7 +88,7 @@ def test_slider_float():
     assert_almost_equal(sld.val, 2.5, 2)
 
 
-@skipif(not viewer_available)
+@skipif(not has_qt)
 def test_save_buttons():
     viewer = get_image_viewer()
     sv = SaveButtons()
@@ -99,10 +102,13 @@ def test_save_buttons():
     timer.singleShot(100, QtGui.QApplication.quit)
 
     sv.save_to_stack()
-    sv.save_to_file(filename)
+    with expected_warnings(['precision loss']):
+        sv.save_to_file(filename)
 
-    img = img_as_float(data.imread(filename))
-    assert_almost_equal(img, viewer.image)
+    img = data.imread(filename)
+
+    with expected_warnings(['precision loss']):
+        assert_almost_equal(img, img_as_uint(viewer.image))
 
     img = io.pop()
     assert_almost_equal(img, viewer.image)
@@ -110,7 +116,7 @@ def test_save_buttons():
     os.remove(filename)
 
 
-@skipif(not viewer_available)
+@skipif(not has_qt)
 def test_ok_buttons():
     viewer = get_image_viewer()
     ok = OKCancelButtons()

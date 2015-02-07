@@ -17,15 +17,12 @@ def configuration(parent_package='', top_path=None):
     cython(['_spath.pyx'], working_path=base_path)
     cython(['_mcp.pyx'], working_path=base_path)
     cython(['heap.pyx'], working_path=base_path)
-    cython(['_ncut_cy.pyx'], working_path=base_path)
 
     config.add_extension('_spath', sources=['_spath.c'],
                          include_dirs=[get_numpy_include_dirs()])
     config.add_extension('_mcp', sources=['_mcp.c'],
                          include_dirs=[get_numpy_include_dirs()])
     config.add_extension('heap', sources=['heap.c'],
-                         include_dirs=[get_numpy_include_dirs()])
-    config.add_extension('_ncut_cy', sources=['_ncut_cy.c'],
                          include_dirs=[get_numpy_include_dirs()])
     return config
 

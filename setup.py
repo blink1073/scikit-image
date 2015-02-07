@@ -35,7 +35,7 @@ DEPENDENCIES = {}
 with open('requirements.txt', 'rb') as fid:
     data = fid.read().decode('utf-8', 'replace')
 for line in data.splitlines():
-    pkg, _, version_info = line.partition('>=')
+    pkg, _, version_info = line.replace('==', '>=').partition('>=')
     # Only require Cython if we have a developer checkout
     if pkg.lower() == 'cython' and not VERSION.endswith('dev'):
         continue
@@ -65,11 +65,17 @@ def write_version_py(filename='skimage/version.py'):
 version='%s'
 """
 
-    vfile = open(os.path.join(os.path.dirname(__file__),
-                              filename), 'w')
-
     try:
+        vfile = open(os.path.join(os.path.dirname(__file__),
+                                  filename), 'w')
         vfile.write(template % VERSION)
+
+    except IOError:
+        raise IOError("Could not open/write to skimage/version.py - did you "
+                      "install using sudo in the past? If so, run\n"
+                      "sudo chown -R your_username ./*\n"
+                      "from package root to fix permissions, and try again.")
+
     finally:
         vfile.close()
 
@@ -88,22 +94,29 @@ def check_requirements():
     for (package_name, min_version) in DEPENDENCIES.items():
         if package_name == 'cython':
             package_name = 'Cython'
-        dep_error = False
+        dep_error = ''
         if package_name.lower() == 'pillow':
             package_name = 'PIL.Image'
+            min_version = '1.1.7'
         try:
             package = __import__(package_name,
                 fromlist=[package_name.rpartition('.')[0]])
         except ImportError:
-            dep_error = True
+            dep_error = ('You need `%s` version %s or later.'
+                         % (package_name, min_version))
         else:
-            package_version = get_package_version(package)
+            if package_name == 'PIL':
+                package_version = package.PILLOW_VERSION
+            else:
+                package_version = get_package_version(package)
 
             if LooseVersion(min_version) > LooseVersion(package_version):
-                dep_error = True
+                dep_error = ('You need `%s` version %s or later,'
+                             'found version %s.'
+                             % (package_name, min_version,
+                                package_version))
         if dep_error:
-            raise ImportError('You need `%s` version %s or later.' \
-                              % (package_name, '.'.join(str(i) for i in min_version)))
+            raise ImportError(dep_error)
 
 
 if __name__ == "__main__":
@@ -142,11 +155,11 @@ if __name__ == "__main__":
 
         configuration=configuration,
         install_requires=[
-            "six>=%s" % '.'.join(str(d) for d in DEPENDENCIES['six'])
+            "six>=%s" % DEPENDENCIES['six']
         ],
         packages=setuptools.find_packages(exclude=['doc']),
         include_package_data=True,
-        zip_safe=False, # the package can run out of an .egg file
+        zip_safe=False,  # the package can run out of an .egg file
 
         entry_points={
             'console_scripts': ['skivi = skimage.scripts.skivi:main'],
