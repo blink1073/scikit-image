@@ -4,9 +4,8 @@ import numpy as np
 from six import string_types
 from PIL import Image
 
-from skimage.util import img_as_ubyte, img_as_uint
-from skimage.external.tifffile import (
-    imread as tif_imread, imsave as tif_imsave)
+from ...util import img_as_ubyte, img_as_uint
+from ...external.tifffile import imread as tif_imread, imsave as tif_imsave
 
 
 def imread(fname, dtype=None, img_num=None, **kwargs):
@@ -74,7 +73,7 @@ def pil_to_ndarray(im, dtype=None, img_num=None):
 
         frame = im
 
-        if not img_num is None and img_num != i:
+        if img_num is not None and img_num != i:
             im.getdata()[0]
             i += 1
             continue
@@ -94,6 +93,8 @@ def pil_to_ndarray(im, dtype=None, img_num=None):
         elif 'A' in im.mode:
             frame = im.convert('RGBA')
 
+        elif im.mode == 'CMYK':
+            frame = im.convert('RGB')
 
         if im.mode.startswith('I;16'):
             shape = im.size

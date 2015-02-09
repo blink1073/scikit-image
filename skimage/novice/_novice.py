@@ -4,11 +4,10 @@ from collections import namedtuple
 from io import BytesIO
 
 import numpy as np
-from skimage import io
-from skimage import img_as_ubyte
-from skimage.transform import resize
-from skimage.color import color_dict
-from skimage.io.util import file_or_url_context, is_url
+from .. import io, img_as_ubyte
+from ..transform import resize
+from ..color import color_dict
+from ..io.util import file_or_url_context, is_url
 
 import six
 from six.moves.urllib_parse import urlparse
@@ -282,6 +281,7 @@ class Picture(object):
         if isinstance(color, six.string_types):
             color = color_dict[color]
         rgb_size = tuple(size) + (len(color),)
+        color = np.array(color, dtype=np.uint8)
         array = np.ones(rgb_size, dtype=np.uint8) * color
 
         # Force RGBA internally (use max alpha)

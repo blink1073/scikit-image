@@ -11,7 +11,7 @@ import numpy as np
 import six
 from PIL import Image
 
-from skimage.external.tifffile import TiffFile
+from ..external.tifffile import TiffFile
 
 
 __all__ = ['MultiImage', 'ImageCollection', 'concatenate_images',
@@ -254,7 +254,7 @@ class ImageCollection(object):
             if ((self.conserve_memory and n != self._cached) or
                     (self.data[idx] is None)):
                 if self._frame_index:
-                    fname, img_num = self._frame_index[idx]
+                    fname, img_num = self._frame_index[n]
                     self.data[idx] = self.load_func(fname, img_num=img_num,
                                                     **self.load_func_kwargs)
                 else:

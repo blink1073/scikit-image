@@ -14,7 +14,7 @@ import numpy as np
 from scipy.ndimage import filters
 from scipy import ndimage as nd
 import math
-from .. import draw, measure, segmentation, util, color
+from ... import draw, measure, segmentation, util, color
 try:
     from matplotlib import colors
     from matplotlib import cm
@@ -164,6 +164,14 @@ class RAG(nx.Graph):
         """
         return self.max_id + 1
 
+    def _add_node_silent(self, n):
+        """Add node `n` without updating the maximum node id.
+
+        This is a convenience method used internally.
+
+        .. seealso:: :func:`networkx.Graph.add_node`."""
+        super(RAG, self).add_node(n)
+
 
 def _add_edge_filter(values, graph):
     """Create edge in `g` between the first element of `values` and the rest.
@@ -243,7 +251,8 @@ def rag_mean_color(image, labels, connectivity=2, mode='distance',
 
     Examples
     --------
-    >>> from skimage import data, graph, segmentation
+    >>> from skimage import data, segmentation
+    >>> from skimage.future import graph
     >>> img = data.astronaut()
     >>> labels = segmentation.slic(img)
     >>> rag = graph.rag_mean_color(img, labels)
@@ -356,7 +365,8 @@ def draw_rag(labels, rag, img, border_color=None, node_color='#ffff00',
 
     Examples
     --------
-    >>> from skimage import data, graph, segmentation
+    >>> from skimage import data, segmentation
+    >>> from skimage.future import graph
     >>> img = data.coffee()
     >>> labels = segmentation.slic(img)
     >>> g =  graph.rag_mean_color(img, labels)
