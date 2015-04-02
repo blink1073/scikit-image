@@ -749,7 +749,7 @@ def tophat(image, selem, out=None, mask=None, shift_x=False, shift_y=False):
 
 def noise_filter(image, selem, out=None, mask=None, shift_x=False,
                  shift_y=False):
-    """Noise feature as described in [Hashimoto12]_.
+    """Noise feature.
 
     Parameters
     ----------
@@ -769,7 +769,7 @@ def noise_filter(image, selem, out=None, mask=None, shift_x=False,
 
     References
     ----------
-    .. [Hashimoto12] N. Hashimoto et al. Referenceless image quality evaluation
+    .. [1] N. Hashimoto et al. Referenceless image quality evaluation
                      for whole slide imaging. J Pathol Inform 2012;3:9.
 
     Returns
@@ -800,10 +800,11 @@ def noise_filter(image, selem, out=None, mask=None, shift_x=False,
 
 
 def entropy(image, selem, out=None, mask=None, shift_x=False, shift_y=False):
-    """Local entropy [1]_.
+    """Local entropy.
 
     The entropy is computed using base 2 logarithm i.e. the filter returns the
-    minimum number of bits needed to encode the local greylevel distribution.
+    minimum number of bits needed to encode the local greylevel
+    distribution.
 
     Parameters
     ----------
@@ -872,7 +873,7 @@ def otsu(image, selem, out=None, mask=None, shift_x=False, shift_y=False):
 
     References
     ----------
-    .. [otsu] http://en.wikipedia.org/wiki/Otsu's_method
+    .. [1] http://en.wikipedia.org/wiki/Otsu's_method
 
     Examples
     --------

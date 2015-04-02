@@ -176,20 +176,23 @@ def ndarray_to_pil(arr, format_str=None):
         mode = 'L'
         mode_base = 'L'
 
+    try:
+        array_buffer = arr.tobytes()
+    except AttributeError:
+        array_buffer = arr.tostring()  # Numpy < 1.9
+
     if arr.ndim == 2:
         im = Image.new(mode_base, arr.T.shape)
         try:
-            im.frombytes(arr.tobytes(), 'raw', mode)
+            im.frombytes(array_buffer, 'raw', mode)
         except AttributeError:
-            im.frombytes(arr.tostring(), 'raw', mode)
-
+            im.fromstring(array_buffer, 'raw', mode)  # PIL 1.1.7
     else:
+        image_shape = (arr.shape[1], arr.shape[0])
         try:
-            im = Image.frombytes(mode, (arr.shape[1], arr.shape[0]),
-                                 arr.tobytes())
+            im = Image.frombytes(mode, image_shape, array_buffer)
         except AttributeError:
-            im = Image.frombytes(mode, (arr.shape[1], arr.shape[0]),
-                                  arr.tostring())
+            im = Image.fromstring(mode, image_shape, array_buffer)  # PIL 1.1.7
     return im
 
 
@@ -260,20 +263,3 @@ def imsave(fname, arr, format_str=None):
 
     img = ndarray_to_pil(arr, format_str=format_str)
     img.save(fname, format=format_str)
-
-
-def imshow(arr):
-    """Display an image, using PIL's default display command.
-
-    Parameters
-    ----------
-    arr : ndarray
-       Image to display.  Images of dtype float are assumed to be in
-       [0, 1].  Images of dtype uint8 are in [0, 255].
-
-    """
-    Image.fromarray(img_as_ubyte(arr)).show()
-
-
-def _app_show():
-    pass

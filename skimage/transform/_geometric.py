@@ -263,6 +263,11 @@ class ProjectiveTransform(GeometricTransform):
         dst : (N, 2) array
             Destination coordinates.
 
+        Returns
+        -------
+        success : bool
+            True, if model estimation succeeds.
+
         """
 
         try:
@@ -270,7 +275,7 @@ class ProjectiveTransform(GeometricTransform):
             dst_matrix, dst = _center_and_normalize_points(dst)
         except ZeroDivisionError:
             self.params = np.nan * np.empty((3, 3))
-            return
+            return False
 
         xs = src[:, 0]
         ys = src[:, 1]
@@ -309,6 +314,8 @@ class ProjectiveTransform(GeometricTransform):
 
         self.params = H
 
+        return True
+
     def __add__(self, other):
         """Combine this transformation with another.
 
@@ -332,7 +339,9 @@ class ProjectiveTransform(GeometricTransform):
 
 class AffineTransform(ProjectiveTransform):
 
-    """2D affine transformation of the form::
+    """2D affine transformation of the form:
+
+    ..:math:
 
         X = a0*x + a1*y + a2 =
           = sx*x*cos(rotation) - sy*y*sin(rotation + shear) + a2
@@ -457,6 +466,11 @@ class PiecewiseAffineTransform(GeometricTransform):
         dst : (N, 2) array
             Destination coordinates.
 
+        Returns
+        -------
+        success : bool
+            True, if model estimation succeeds.
+
         """
 
         # forward piecewise affine
@@ -478,6 +492,8 @@ class PiecewiseAffineTransform(GeometricTransform):
             affine = AffineTransform()
             affine.estimate(dst[tri, :], src[tri, :])
             self.inverse_affines.append(affine)
+
+        return True
 
     def __call__(self, coords):
         """Apply forward transformation.
@@ -551,7 +567,9 @@ class PiecewiseAffineTransform(GeometricTransform):
 
 
 class SimilarityTransform(ProjectiveTransform):
-    """2D similarity transformation of the form::
+    """2D similarity transformation of the form:
+
+    ..:math:
 
         X = a0 * x - b0 * y + a1 =
           = m * x * cos(rotation) - m * y * sin(rotation) + a1
@@ -654,6 +672,11 @@ class SimilarityTransform(ProjectiveTransform):
         dst : (N, 2) array
             Destination coordinates.
 
+        Returns
+        -------
+        success : bool
+            True, if model estimation succeeds.
+
         """
 
         try:
@@ -661,7 +684,7 @@ class SimilarityTransform(ProjectiveTransform):
             dst_matrix, dst = _center_and_normalize_points(dst)
         except ZeroDivisionError:
             self.params = np.nan * np.empty((3, 3))
-            return
+            return False
 
         xs = src[:, 0]
         ys = src[:, 1]
@@ -695,6 +718,7 @@ class SimilarityTransform(ProjectiveTransform):
 
         self.params = S
 
+        return True
 
     @property
     def scale(self):
@@ -715,7 +739,9 @@ class SimilarityTransform(ProjectiveTransform):
 
 
 class PolynomialTransform(GeometricTransform):
-    """2D transformation of the form::
+    """2D transformation of the form:
+
+    ..:math:
 
         X = sum[j=0:order]( sum[i=0:j]( a_ji * x**(j - i) * y**i ))
         Y = sum[j=0:order]( sum[i=0:j]( b_ji * x**(j - i) * y**i ))
@@ -792,6 +818,11 @@ class PolynomialTransform(GeometricTransform):
         order : int, optional
             Polynomial order (number of coefficients is order + 1).
 
+        Returns
+        -------
+        success : bool
+            True, if model estimation succeeds.
+
         """
         xs = src[:, 0]
         ys = src[:, 1]
@@ -821,6 +852,8 @@ class PolynomialTransform(GeometricTransform):
         params = - V[-1, :-1] / V[-1, -1]
 
         self.params = params.reshape((2, u // 2))
+
+        return True
 
     def __call__(self, coords):
         """Apply forward transformation.

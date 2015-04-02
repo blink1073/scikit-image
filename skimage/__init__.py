@@ -64,28 +64,17 @@ import warnings as _warnings
 pkg_dir = _osp.abspath(_osp.dirname(__file__))
 data_dir = _osp.join(pkg_dir, 'data')
 
-try:
-    from .version import version as __version__
-except ImportError:
-    __version__ = "unbuilt-dev"
-else:
-    del version
-
+__version__ = '0.12dev'
 
 try:
     _imp.find_module('nose')
 except ImportError:
-    def _test(verbose=False):
+    def _test(doctest=False, verbose=False):
         """This would run all unit tests, but nose couldn't be
         imported so the test suite can not run.
         """
         raise ImportError("Could not load nose. Unit tests not available.")
 
-    def _doctest(verbose=False):
-        """This would run all doc tests, but nose couldn't be
-        imported so the test suite can not run.
-        """
-        raise ImportError("Could not load nose. Doctests not available.")
 else:
     def _test(doctest=False, verbose=False):
         """Run all unit tests."""

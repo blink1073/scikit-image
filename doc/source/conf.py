@@ -68,10 +68,10 @@ copyright = '2013, the scikit-image team'
 #
 # The short X.Y version.
 
-setup_lines = open('../../setup.py').readlines()
+setup_lines = open('../../skimage/__init__.py').readlines()
 version = 'vUndefined'
 for l in setup_lines:
-    if l.startswith('VERSION'):
+    if l.startswith('__version__'):
         version = l.split("'")[1]
         break
 
@@ -251,6 +251,7 @@ latex_use_modindex = False
 # Numpy extensions
 # -----------------------------------------------------------------------------
 numpydoc_show_class_members = False
+numpydoc_class_members_toctree = False
 
 # -----------------------------------------------------------------------------
 # Plots
