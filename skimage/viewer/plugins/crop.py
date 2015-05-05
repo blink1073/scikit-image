@@ -1,6 +1,6 @@
 from .base import Plugin
 from ..canvastools import RectangleTool
-from ...viewer.widgets import SaveButtons
+from ...viewer.widgets import SaveButtons, Button
 
 
 __all__ = ['Crop']
@@ -23,6 +23,9 @@ class Crop(Plugin):
                                        on_enter=self.crop)
         self.artists.append(self.rect_tool)
 
+        self.reset_button = Button('Reset', self.reset)
+        self.add_widget(self.reset_button)
+
     def help(self):
         helpstr = ("Crop tool",
                    "Select rectangular region and press enter to crop.")
@@ -32,4 +35,8 @@ class Crop(Plugin):
         xmin, xmax, ymin, ymax = extents
         image = self.image_viewer.image[ymin:ymax+1, xmin:xmax+1]
         self.image_viewer.image = image
+        self.image_viewer.ax.relim()
+
+    def reset(self):
+        self.image_viewer.image = self.image_viewer.original_image
         self.image_viewer.ax.relim()
