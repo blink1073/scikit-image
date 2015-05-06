@@ -33,10 +33,13 @@ class Crop(Plugin):
 
     def crop(self, extents):
         xmin, xmax, ymin, ymax = extents
+        if xmin == xmax or ymin == ymax:
+            return
         image = self.image_viewer.image[ymin:ymax+1, xmin:xmax+1]
         self.image_viewer.image = image
         self.image_viewer.ax.relim()
 
     def reset(self):
+        self.rect_tool.extents = 0, 0, 0, 0
         self.image_viewer.image = self.image_viewer.original_image
         self.image_viewer.ax.relim()
