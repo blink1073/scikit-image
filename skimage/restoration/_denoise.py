@@ -2,6 +2,7 @@
 import numpy as np
 from .. import img_as_float
 from ..restoration._denoise_cy import _denoise_bilateral, _denoise_tv_bregman
+from .._shared.utils import _mode_deprecations
 
 
 def denoise_bilateral(image, win_size=5, sigma_range=None, sigma_spatial=1,
@@ -21,8 +22,8 @@ def denoise_bilateral(image, win_size=5, sigma_range=None, sigma_spatial=1,
 
     Parameters
     ----------
-    image : ndarray
-        Input image.
+    image : ndarray, shape (M, N[, 3])
+        Input image, 2D grayscale or RGB.
     win_size : int
         Window size for filtering.
     sigma_range : float
@@ -30,16 +31,17 @@ def denoise_bilateral(image, win_size=5, sigma_range=None, sigma_spatial=1,
         similarity). A larger value results in averaging of pixels with larger
         radiometric differences. Note, that the image will be converted using
         the `img_as_float` function and thus the standard deviation is in
-        respect to the range `[0, 1]`.
+        respect to the range ``[0, 1]``. If the value is ``None`` the standard
+        deviation of the ``image`` will be used.
     sigma_spatial : float
         Standard deviation for range distance. A larger value results in
         averaging of pixels with larger spatial differences.
     bins : int
         Number of discrete values for gaussian weights of color filtering.
         A larger value results in improved accuracy.
-    mode : string
+    mode : {'constant', 'edge', 'symmetric', 'reflect', 'wrap'}
         How to handle values outside the image borders. See
-        `scipy.ndimage.map_coordinates` for detail.
+        `numpy.pad` for detail.
     cval : string
         Used in conjunction with mode 'constant', the value outside
         the image boundaries.
@@ -53,7 +55,16 @@ def denoise_bilateral(image, win_size=5, sigma_range=None, sigma_spatial=1,
     ----------
     .. [1] http://users.soe.ucsc.edu/~manduchi/Papers/ICCV98.pdf
 
+    Example
+    -------
+    >>> from skimage import data, img_as_float
+    >>> astro = img_as_float(data.astronaut())
+    >>> astro = astro[220:300, 220:320]
+    >>> noisy = astro + 0.6 * astro.std() * np.random.random(astro.shape)
+    >>> noisy = np.clip(noisy, 0, 1)
+    >>> denoised = denoise_bilateral(noisy, sigma_range=0.05, sigma_spatial=15)
     """
+    mode = _mode_deprecations(mode)
     return _denoise_bilateral(image, win_size, sigma_range, sigma_spatial,
                               bins, mode, cval)
 
@@ -105,7 +116,7 @@ def denoise_tv_bregman(image, weight, max_iter=100, eps=1e-3, isotropic=True):
     return _denoise_tv_bregman(image, weight, max_iter, eps, isotropic)
 
 
-def _denoise_tv_chambolle_3d(im, weight=100, eps=2.e-4, n_iter_max=200):
+def _denoise_tv_chambolle_3d(im, weight=0.2, eps=2.e-4, n_iter_max=200):
     """Perform total-variation denoising on 3D images.
 
     Parameters
@@ -178,7 +189,7 @@ def _denoise_tv_chambolle_3d(im, weight=100, eps=2.e-4, n_iter_max=200):
     return out
 
 
-def _denoise_tv_chambolle_2d(im, weight=50, eps=2.e-4, n_iter_max=200):
+def _denoise_tv_chambolle_2d(im, weight=0.2, eps=2.e-4, n_iter_max=200):
     """Perform total-variation denoising on 2D images.
 
     Parameters
@@ -254,7 +265,7 @@ def _denoise_tv_chambolle_2d(im, weight=50, eps=2.e-4, n_iter_max=200):
     return out
 
 
-def denoise_tv_chambolle(im, weight=50, eps=2.e-4, n_iter_max=200,
+def denoise_tv_chambolle(im, weight=0.2, eps=2.e-4, n_iter_max=200,
                          multichannel=False):
     """Perform total-variation denoising on 2D and 3D images.
 

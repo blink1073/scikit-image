@@ -11,6 +11,7 @@ from skimage.transform import (warp, warp_coords, rotate, resize, rescale,
 from skimage import transform as tf, data, img_as_float
 from skimage.color import rgb2gray
 from skimage._shared._warnings import expected_warnings
+from skimage._shared.testing import test_parallel
 
 
 np.random.seed(0)
@@ -41,6 +42,7 @@ def test_warp_callable():
     assert_almost_equal(outx, refx)
 
 
+@test_parallel()
 def test_warp_matrix():
     x = np.zeros((5, 5), dtype=np.double)
     x[2, 2] = 1
@@ -179,6 +181,16 @@ def test_resize3d_resize():
     assert_almost_equal(resized, ref)
 
 
+def test_resize3d_2din_3dout():
+    # 3D output with 2D input
+    x = np.zeros((5, 5), dtype=np.double)
+    x[1, 1] = 1
+    resized = resize(x, (10, 10, 1), order=0)
+    ref = np.zeros((10, 10, 1))
+    ref[2:4, 2:4] = 1
+    assert_almost_equal(resized, ref)
+
+
 def test_resize3d_bilinear():
     # bilinear 3rd dimension
     x = np.zeros((5, 5, 2), dtype=np.double)
@@ -197,7 +209,7 @@ def test_swirl():
     image = img_as_float(data.checkerboard())
 
     swirl_params = {'radius': 80, 'rotation': 0, 'order': 2, 'mode': 'reflect'}
-    
+
     with expected_warnings(['Bi-quadratic.*bug']):
         swirled = tf.swirl(image, strength=10, **swirl_params)
         unswirled = tf.swirl(swirled, strength=-10, **swirl_params)

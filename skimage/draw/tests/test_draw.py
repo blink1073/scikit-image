@@ -1,5 +1,6 @@
 from numpy.testing import assert_array_equal, assert_equal
 import numpy as np
+from skimage._shared.testing import test_parallel
 
 from skimage.draw import (set_color, line, line_aa, polygon,
                           circle, circle_perimeter, circle_perimeter_aa,
@@ -19,6 +20,7 @@ def test_set_color():
     assert_array_equal(img, img_)
 
 
+@test_parallel()
 def test_line_horizontal():
     img = np.zeros((10, 10))
 
@@ -102,12 +104,26 @@ def test_line_aa_diagonal():
     for x, y in zip(r, c):
         assert_equal(img[r, c], 1)
 
+def test_line_equal_aliasing_horizontally_vertically():
+    img0 = np.zeros((25, 25))
+    img1 = np.zeros((25, 25))
+
+    # Near-horizontal line
+    rr, cc, val = line_aa(10, 2, 12, 20)
+    img0[rr, cc] = val
+
+    # Near-vertical (transpose of prior)
+    rr, cc, val = line_aa(2, 10, 20, 12)
+    img1[rr, cc] = val
+
+    # Difference - should be zero
+    assert_array_equal(img0, img1.T)
+
 
 def test_polygon_rectangle():
     img = np.zeros((10, 10), 'uint8')
-    poly = np.array(((1, 1), (4, 1), (4, 4), (1, 4), (1, 1)))
 
-    rr, cc = polygon(poly[:, 0], poly[:, 1])
+    rr, cc = polygon((1, 4, 4, 1, 1), (1, 1, 4, 4, 1))
     img[rr, cc] = 1
 
     img_ = np.zeros((10, 10))

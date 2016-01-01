@@ -1,7 +1,6 @@
 import os
 import imghdr
 from collections import namedtuple
-from io import BytesIO
 
 import numpy as np
 from .. import io, img_as_ubyte
@@ -10,7 +9,6 @@ from ..color import color_dict
 from ..io.util import file_or_url_context, is_url
 
 import six
-from six.moves.urllib_parse import urlparse
 from six.moves.urllib import request
 urlopen = request.urlopen
 
@@ -207,42 +205,50 @@ class Picture(object):
 
     Examples
     --------
-    Load an image from a file
+    Load an image from a file:
+
     >>> from skimage import novice
     >>> from skimage import data
     >>> picture = novice.open(data.data_dir + '/chelsea.png')
 
-    Load an image from a URL. URL must start with http(s):// or ftp(s)://
+    Load an image from a URL (the URL must start with ``http(s)://`` or
+    ``ftp(s)://``):
+
     >>> picture = novice.open('http://scikit-image.org/_static/img/logo.png')
 
-    Create a blank 100 pixel wide, 200 pixel tall white image
+    Create a blank 100 pixel wide, 200 pixel tall white image:
+
     >>> pic = Picture.from_size((100, 200), color=(255, 255, 255))
 
-    Use numpy to make an RGB byte array (shape is height x width x 3)
+    Use numpy to make an RGB byte array (shape is height x width x 3):
+
     >>> import numpy as np
     >>> data = np.zeros(shape=(200, 100, 3), dtype=np.uint8)
     >>> data[:, :, 0] = 255  # Set red component to maximum
     >>> pic = Picture(array=data)
 
-    Get the bottom-left pixel
+    Get the bottom-left pixel:
+
     >>> pic[0, 0]
     Pixel(red=255, green=0, blue=0, alpha=255)
 
-    Get the top row of the picture
+    Get the top row of the picture:
+
     >>> pic[:, pic.height-1]
     Picture(100 x 1)
 
-    Set the bottom-left pixel to black
+    Set the bottom-left pixel to black:
+
     >>> pic[0, 0] = (0, 0, 0)
 
-    Set the top row to red
+    Set the top row to red:
+
     >>> pic[:, pic.height-1] = (255, 0, 0)
 
     """
 
     def __init__(self, path=None, array=None, xy_array=None):
         self._modified = False
-        self.scale = 1
         self._path = None
         self._format = None
 
@@ -318,7 +324,7 @@ class Picture(object):
         path : str
             Path (with file extension) where the picture is saved.
         """
-        io.imsave(path, self._rescale(self.array))
+        io.imsave(path, self.array)
         self._modified = False
         self._path = os.path.abspath(path)
         self._format = imghdr.what(path)
@@ -377,25 +383,15 @@ class Picture(object):
     def height(self, value):
         self.size = (self.width, value)
 
-    def _repr_png_(self):
-        return io.Image(self._rescale(self.array))._repr_png_()
-
     def show(self):
         """Display the image."""
-        io.imshow(self._rescale(self.array))
+        io.imshow(self.array)
         io.show()
 
     def _makepixel(self, x, y):
         """Create a Pixel object for a given x, y location."""
         rgb = self.xy_array[x, y]
         return Pixel(self, self.array, x, y, rgb)
-
-    def _rescale(self, array):
-        """Rescale image according to scale factor."""
-        if self.scale == 1:
-            return array
-        new_size = (self.height * self.scale, self.width * self.scale)
-        return img_as_ubyte(resize(array, new_size, order=0))
 
     def _get_channel(self, channel):
         """Return a specific dimension out of the raw image data slice."""
@@ -490,6 +486,19 @@ class Picture(object):
 
     def __repr__(self):
         return "Picture({0} x {1})".format(*self.size)
+
+    def _repr_png_(self):
+        return self._repr_image_format('png')
+
+    def _repr_jpeg_(self):
+        return self._repr_image_format('jpeg')
+
+    def _repr_image_format(self, format_str):
+        str_buffer = six.BytesIO()
+        io.imsave(str_buffer, self.array, format_str=format_str)
+        return_str = str_buffer.getvalue()
+        str_buffer.close()
+        return return_str
 
 
 if __name__ == '__main__':

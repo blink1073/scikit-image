@@ -2,7 +2,7 @@
 
 import collections as coll
 import numpy as np
-from scipy import ndimage
+from scipy import ndimage as ndi
 import warnings
 
 from ..util import img_as_float, regular_grid
@@ -25,10 +25,13 @@ def slic(image, n_segments=100, compactness=10., max_iter=10, sigma=0,
     n_segments : int, optional
         The (approximate) number of labels in the segmented output image.
     compactness : float, optional
-        Balances color-space proximity and image-space proximity. Higher
-        values give more weight to image-space. As `compactness` tends to
-        infinity, superpixel shapes become square/cubic. In SLICO mode, this
-        is the initial compactness.
+        Balances color proximity and space proximity. Higher values give
+        more weight to space proximity, making superpixel shapes more
+        square/cubic. In SLICO mode, this is the initial compactness.
+        This parameter depends strongly on image contrast and on the
+        shapes of objects in the image. We recommend exploring possible
+        values on a log scale, e.g., 0.01, 0.1, 1, 10, 100, before
+        refining around a chosen value.
     max_iter : int, optional
         Maximum number of iterations of k-means.
     sigma : float or (3,) array-like of floats, optional
@@ -139,7 +142,7 @@ def slic(image, n_segments=100, compactness=10., max_iter=10, sigma=0,
     if (sigma > 0).any():
         # add zero smoothing for multichannel dimension
         sigma = list(sigma) + [0]
-        image = ndimage.gaussian_filter(image, sigma)
+        image = ndi.gaussian_filter(image, sigma)
 
     if multichannel and (convert2lab or convert2lab is None):
         if image.shape[-1] != 3 and convert2lab:
@@ -152,7 +155,8 @@ def slic(image, n_segments=100, compactness=10., max_iter=10, sigma=0,
     # initialize cluster centroids for desired number of segments
     grid_z, grid_y, grid_x = np.mgrid[:depth, :height, :width]
     slices = regular_grid(image.shape[:3], n_segments)
-    step_z, step_y, step_x = [int(s.step) for s in slices]
+    step_z, step_y, step_x = [int(s.step if s.step is not None else 1)
+                              for s in slices]
     segments_z = grid_z[slices]
     segments_y = grid_y[slices]
     segments_x = grid_x[slices]
