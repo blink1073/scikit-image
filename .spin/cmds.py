@@ -98,7 +98,7 @@ Use an editable install (`spin install`) which supports this or avoid passing
 @click.option(
     "--test-modified",
     is_flag=True,
-    default=None,
+    default=False,
     help="Test only modified submodules",
 )
 @click.option("--doctest/--no-doctest", default=True, help="Whether to run doctests.")
@@ -137,11 +137,12 @@ def test(*, parent_callback, test_modified=False, doctest=False, **kwargs):
 
         if not changed_modules:
             click.secho("No modified skimage modules detected.", fg="yellow")
-        else:
-            click.secho(
-                f"Testing modified modules: {', '.join(sorted(changed_modules))}",
-                fg="green",
-            )
+            return
+
+        click.secho(
+            f"Testing modified modules: {', '.join(sorted(changed_modules))}",
+            fg="green",
+        )
 
         if "--pyargs" in pytest_args:
             raise RuntimeError("--test-modified will override --pyargs")
