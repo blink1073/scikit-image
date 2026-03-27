@@ -15,27 +15,22 @@ jobs:
     name: linux-cp${{ inputs.python-version }}
     runs-on: ubuntu-latest
 
+    env:
+      CCACHE_BASEDIR: "${{ github.workspace }}"
+      CCACHE_DIR: "${{ github.workspace }}/.ccache"
+      CCACHE_COMPRESS: true
+      CCACHE_COMPRESSLEVEL: 6
+      CCACHE_MAXSIZE: 400M
+      CCACHE_SLOPPINESS: "pch_defines,time_macros"
+
     steps:
       - name: Checkout scikit-image
-        uses: actions/checkout@v4
+        uses: actions/checkout@v5
         with:
           persist-credentials: false
 
-      - name: Install ccache
-        run: |
-          sudo apt-get install -y ccache
-          mkdir -p ~/.ccache
-
-      - name: Restore ccache build cache
-        if: "!(github.repository_owner == 'scikit-image' && github.ref == 'refs/heads/main')"
-        uses: actions/cache/restore@v4
-        id: ccache-restore
-        with:
-          path: ~/.ccache
-          key: ${{ runner.os }}-ccache-py${{ inputs.python-version }}
-
       - name: Setup Python
-        uses: actions/setup-python@v5
+        uses: actions/setup-python@v6
         with:
           python-version: ${{ inputs.python-version }}
           allow-prereleases: true
@@ -48,22 +43,35 @@ jobs:
         run: |
           source .github/scripts/setup-build-env.sh
 
-      - name: Build from sdist
+      - name: Install and configure ccache
         run: |
-          # Debug build is able to utilize ccache better
+          sudo apt-get install -y ccache
+          sudo /usr/sbin/update-ccache-symlinks
+          echo "/usr/lib/ccache" >> $GITHUB_PATH
+          ccache --zero-stats
+
+      - name: Prepare ccache key
+        id: ccache-key
+        run: echo "timestamp=$(date +%Y%m%d-%H%M%S)" >> $GITHUB_OUTPUT
+
+      - name: Restore/save ccache
+        uses: actions/cache@v4
+        with:
+          path: ${{ github.workspace }}/.ccache
+          key: ccache-${{ runner.os }}-py${{ inputs.python-version }}-${{ steps.ccache-key.outputs.timestamp }}
+          restore-keys: |
+            ccache-${{ runner.os }}-py${{ inputs.python-version }}-
+
+      - name: Build wheel
+        run: |
           python -m build --no-isolation --skip-dependency-check -Csetup-args="-Doptimization=2"
+
+      - name: ccache statistics
+        if: always()
+        run: ccache --show-stats
 
       - uses: actions/upload-artifact@v4
         with:
           name: skimage-linux-${{ inputs.python-version }}
           path: ./dist/*.whl
-
-      - name: Ccache statistics
-        run: |
-          ccache -s
-
-      - name: Save ccache build cache
-        uses: actions/cache/save@v4
-        with:
-          path: ~/.ccache
-          key: ${{ steps.ccache-restore.outputs.cache-primary-key }}
+          if-no-files-found: error
