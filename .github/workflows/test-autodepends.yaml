@@ -67,4 +67,4 @@ jobs:
           git branch main origin/main
           pip uninstall -y SimpleITK  # Causes np.lookfor test to fail 🤔
 
-          spin test --test-modified -- --doctest-plus --config-file ${{ github.workspace }}/pyproject.toml
+          spin test --test-modified --doctest -- --config-file ${{ github.workspace }}/pyproject.toml
