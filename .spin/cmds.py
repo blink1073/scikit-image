@@ -95,10 +95,58 @@ Use an editable install (`spin install`) which supports this or avoid passing
 """
 
 
+@click.option(
+    "--test-modified",
+    is_flag=True,
+    default=None,
+    help="Test only modified submodules",
+)
 @click.option("--doctest/--no-doctest", default=True, help="Whether to run doctests.")
 @spin.util.extend_command(spin.cmds.meson.test)
-def test(*, parent_callback, doctest=False, **kwargs):
+def test(*, parent_callback, test_modified=False, doctest=False, **kwargs):
+    import importlib
+
     pytest_args = kwargs.get('pytest_args', ())
+
+    if test_modified:
+        build_dir = kwargs.get('build_dir', 'build')
+        # Ensure spin-built version of skimage is accessible
+        p = spin.cmds.meson._set_pythonpath(build_dir, quiet=True)
+        sys.path.insert(0, p)
+
+        pkg = importlib.import_module('skimage')
+        pkg_mods = {f'skimage.{attr}' for attr in dir(pkg) if not attr.startswith('_')}
+        pkg_mods |= {'skimage._shared', 'skimage.filters.rank'}
+        pkg_mods -= {'skimage.__version__'}
+
+        p = spin.util.run(
+            ['git', 'diff', 'main', '--stat', '--name-only'], output=False, echo=False
+        )
+        if p.returncode != 0:
+            raise click.ClickException('Could not git-diff against main')
+
+        git_diff = p.stdout.decode('utf-8')
+        changed_modules = {mod for mod in pkg_mods if mod.replace('.', '/') in git_diff}
+
+        if not changed_modules:
+            click.secho("No modified skimage modules detected.", fg="yellow")
+        else:
+            click.secho(
+                f"Testing modified modules: {', '.join(sorted(changed_modules))}",
+                fg="green",
+            )
+
+        if "--pyargs" in pytest_args:
+            raise RuntimeError("--test-modified will override --pyargs")
+
+        # Map module names to their test directories (src-layout: tests live outside src/)
+        test_paths = []
+        for mod in sorted(changed_modules):
+            test_dir = os.path.join('tests', mod.replace('.', '/'))
+            if os.path.isdir(test_dir):
+                test_paths.append(test_dir)
+
+        pytest_args = pytest_args + tuple(test_paths)
 
     is_out_of_tree_build = not _is_editable_install_of_same_source("scikit-image")
     if is_out_of_tree_build and "src" in str(pytest_args):
