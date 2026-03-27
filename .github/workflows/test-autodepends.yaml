@@ -13,7 +13,7 @@ concurrency:
 jobs:
   test_skimage_autodetect:
     name: macos-auto-cp${{ matrix.python-version }}
-    runs-on: macos-13
+    runs-on: macos-latest
 
     strategy:
       fail-fast: true
