@@ -32,6 +32,16 @@ jobs:
     with:
       python-version: 3.13
 
+  build-linux-314:
+    uses: ./.github/workflows/_build_linux_for_python_x.yaml
+    with:
+      python-version: 3.14
+
+  build-linux-314t:
+    uses: ./.github/workflows/_build_linux_for_python_x.yaml
+    with:
+      python-version: 3.14t
+
   test-linux-311:
     name: test-linux-cp3.11-${{ matrix.OPTIONS_NAME }}
     needs: [build-linux-311]
@@ -119,3 +129,74 @@ jobs:
       WITHOUT_POOCH: ${{ matrix.WITHOUT_POOCH }}
       PIP_FLAGS: ${{ matrix.PIP_FLAGS }}
       PYTHONOPTIMIZE: ${{ matrix.PYTHONOPTIMIZE }}
+
+  test-linux-314:
+    name: test-linux-cp3.14-${{ matrix.OPTIONS_NAME }}
+    needs: [build-linux-314]
+    strategy:
+      fail-fast: false
+      matrix:
+        # Dependency options for setup-test-env.sh
+        OPTIONS_NAME: ["main"]
+        MINIMUM_REQUIREMENTS: [0]
+        OPTIONAL_DEPS: [0]
+        WITHOUT_POOCH: [0]
+        PIP_FLAGS: [""]
+
+    uses: ./.github/workflows/_test_linux_for_python_x.yaml
+    with:
+      python-version: 3.14
+      OPTIONS_NAME: ${{ matrix.OPTIONS_NAME }}
+      MINIMUM_REQUIREMENTS: ${{ matrix.MINIMUM_REQUIREMENTS }}
+      OPTIONAL_DEPS: ${{ matrix.OPTIONAL_DEPS }}
+      EAGER_IMPORT: ${{ matrix.EAGER_IMPORT }}
+      WITHOUT_POOCH: ${{ matrix.WITHOUT_POOCH }}
+      PIP_FLAGS: ${{ matrix.PIP_FLAGS }}
+      PYTHONOPTIMIZE: ${{ matrix.PYTHONOPTIMIZE }}
+
+  test-linux-314t:
+    name: test-linux-cp3.14t-${{ matrix.OPTIONS_NAME }}
+    needs: [build-linux-314t]
+    strategy:
+      fail-fast: false
+      matrix:
+        # Dependency options for setup-test-env.sh
+        OPTIONS_NAME: ["main"]
+        MINIMUM_REQUIREMENTS: [0]
+        OPTIONAL_DEPS: [0]
+        WITHOUT_POOCH: [0]
+        PIP_FLAGS: [""]
+
+    uses: ./.github/workflows/_test_linux_for_python_x.yaml
+    with:
+      python-version: 3.14t
+      OPTIONS_NAME: ${{ matrix.OPTIONS_NAME }}
+      MINIMUM_REQUIREMENTS: ${{ matrix.MINIMUM_REQUIREMENTS }}
+      OPTIONAL_DEPS: ${{ matrix.OPTIONAL_DEPS }}
+      EAGER_IMPORT: ${{ matrix.EAGER_IMPORT }}
+      WITHOUT_POOCH: ${{ matrix.WITHOUT_POOCH }}
+      PIP_FLAGS: ${{ matrix.PIP_FLAGS }}
+      PYTHONOPTIMIZE: ${{ matrix.PYTHONOPTIMIZE }}
+
+  report-failures:
+    runs-on: ubuntu-latest
+    needs:
+      [
+        test-linux-311,
+        test-linux-312,
+        test-linux-313,
+        test-linux-314,
+        test-linux-314t,
+      ]
+    if: ${{ always() && github.ref == 'refs/heads/main' && contains(needs.*.result, 'failure') }}
+    permissions:
+      issues: write
+    steps:
+      - name: "Job has failed: reporting"
+        uses: JasonEtco/create-an-issue@1b14a70e4d8dc185e5cc76d3bec9eab20257b2c5 # v2.9.2
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          BUILD_TYPE: "linux tests"
+        with:
+          filename: .github/MAIN_FAIL_TEMPLATE.md
+          update_existing: true
