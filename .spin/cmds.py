@@ -120,7 +120,14 @@ def test(*, parent_callback, test_modified=False, doctest=False, **kwargs):
         pkg_mods -= {'skimage.__version__'}
 
         p = spin.util.run(
-            ['git', 'diff', 'main', '--stat', '--name-only'], output=False, echo=False
+            ['git', 'merge-base', 'main', 'HEAD'], output=False, echo=False
+        )
+        if p.returncode != 0:
+            raise click.ClickException('Could not find merge base with main')
+        merge_base = p.stdout.decode('utf-8').strip()
+
+        p = spin.util.run(
+            ['git', 'diff', merge_base, '--name-only'], output=False, echo=False
         )
         if p.returncode != 0:
             raise click.ClickException('Could not git-diff against main')
@@ -139,12 +146,18 @@ def test(*, parent_callback, test_modified=False, doctest=False, **kwargs):
         if "--pyargs" in pytest_args:
             raise RuntimeError("--test-modified will override --pyargs")
 
-        # Map module names to their test directories (src-layout: tests live outside src/)
+        # Map module names to their test and (optionally) source directories.
+        # src-layout: tests live outside src/, doctests live inside src/.
         test_paths = []
         for mod in sorted(changed_modules):
-            test_dir = os.path.join('tests', mod.replace('.', '/'))
+            mod_path = mod.replace('.', '/')
+            test_dir = os.path.join('tests', mod_path)
             if os.path.isdir(test_dir):
                 test_paths.append(test_dir)
+            if doctest:
+                src_dir = os.path.join('src', mod_path)
+                if os.path.isdir(src_dir):
+                    test_paths.append(src_dir)
 
         pytest_args = pytest_args + tuple(test_paths)
 
