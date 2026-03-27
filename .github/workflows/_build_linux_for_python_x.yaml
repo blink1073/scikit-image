@@ -50,15 +50,11 @@ jobs:
           echo "/usr/lib/ccache" >> $GITHUB_PATH
           ccache --zero-stats
 
-      - name: Prepare ccache key
-        id: ccache-key
-        run: echo "timestamp=$(date +%Y%m%d-%H%M%S)" >> $GITHUB_OUTPUT
-
       - name: Restore/save ccache
         uses: actions/cache@v4
         with:
           path: ${{ github.workspace }}/.ccache
-          key: ccache-${{ runner.os }}-py${{ inputs.python-version }}-${{ steps.ccache-key.outputs.timestamp }}
+          key: ccache-${{ runner.os }}-py${{ inputs.python-version }}-${{ github.sha }}
           restore-keys: |
             ccache-${{ runner.os }}-py${{ inputs.python-version }}-
 
