@@ -87,9 +87,5 @@ jobs:
           # A lazy loader configuration parameter
           EAGER_IMPORT: ${{ inputs.EAGER_IMPORT }}
           MINIMUM_REQUIREMENTS: ${{ inputs.MINIMUM_REQUIREMENTS }}
-          PYTHONOPTIMIZE: ${{ inputs.PYTHONOPTIMIZE }}
         run: |
-          if [ "${PYTHONOPTIMIZE:-0}" != "0" ]; then
-            EXTRA_FLAGS="-W ignore::pytest.PytestConfigWarning"
-          fi
-          $PYTEST ${EXTRA_FLAGS} --doctest-plus --showlocals --pyargs skimage ./tests
+          $PYTEST --doctest-plus --showlocals --pyargs skimage ./tests
