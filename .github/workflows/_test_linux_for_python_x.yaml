@@ -38,14 +38,17 @@ jobs:
     name: linux-cp${{ inputs.python-version }}-${{ inputs.OPTIONS_NAME }}
     runs-on: ubuntu-latest
 
+    env:
+      PYTEST: "pytest --config-file ${{ github.workspace }}/pyproject.toml"
+
     steps:
       - name: Checkout scikit-image
-        uses: actions/checkout@v4
+        uses: actions/checkout@v5
         with:
           persist-credentials: false
 
       - name: Setup Python
-        uses: actions/setup-python@v5
+        uses: actions/setup-python@v6
         with:
           python-version: ${{ inputs.python-version }}
           allow-prereleases: true
@@ -86,4 +89,4 @@ jobs:
           MINIMUM_REQUIREMENTS: ${{ inputs.MINIMUM_REQUIREMENTS }}
           PYTHONOPTIMIZE: ${{ inputs.PYTHONOPTIMIZE }}
         run: |
-          (cd .. && pytest --doctest-plus --showlocals --pyargs skimage)
+          $PYTEST --doctest-plus --showlocals --pyargs skimage ./tests
