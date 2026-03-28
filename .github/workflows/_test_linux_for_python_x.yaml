@@ -101,3 +101,7 @@ jobs:
           MINIMUM_REQUIREMENTS: ${{ inputs.MINIMUM_REQUIREMENTS }}
         run: |
           $PYTEST --doctest-plus --showlocals --pyargs skimage ./tests
+
+      - name: Check benchmarks
+        run: |
+          asv check -v -E existing

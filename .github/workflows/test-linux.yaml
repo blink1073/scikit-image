@@ -10,10 +10,6 @@ concurrency:
 permissions:
   contents: read
 
-env:
-  TEST: "spin test -- --config-file ${{ github.workspace }}/pyproject.toml"
-  PYTEST: "pytest --config-file ${{ github.workspace }}/pyproject.toml"
-
 jobs:
   # GH does not support creating separate jobs out of a matrix,
   # so this is a workaround
