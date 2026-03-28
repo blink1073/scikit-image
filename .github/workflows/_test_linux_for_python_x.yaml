@@ -32,6 +32,10 @@ on:
         required: false
         type: string
         default: 0
+      INSTALL_FROM_SDIST:
+        required: false
+        type: string
+        default: 0
 
 jobs:
   test-linux:
@@ -61,11 +65,19 @@ jobs:
           name: skimage-linux-${{ inputs.python-version }}
           path: ./dist
 
-      - name: Install
+      - name: Install wheel
+        if: ${{ matrix.INSTALL_FROM_SDIST != 1 }}
         env:
           PIP_FLAGS: ${{ inputs.PIP_FLAGS }}
         run: |
           pip install dist/*.whl
+
+      - name: Install sdist
+        if: ${{ matrix.INSTALL_FROM_SDIST == 1 }}
+        env:
+          PIP_FLAGS: ${{ inputs.PIP_FLAGS }}
+        run: |
+          pip install dist/*.tar.gz
 
       - name: Install test dependencies
         env:

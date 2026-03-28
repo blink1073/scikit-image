@@ -94,6 +94,8 @@ jobs:
           - PYTHONOPTIMIZE: 2
             WITHOUT_POOCH: 1
             OPTIONS_NAME: "optimize-and-no-pooch"
+          - INSTALL_FROM_SDIST: 1
+            OPTIONS_NAME: "install-from-sdist"
 
     uses: ./.github/workflows/_test_linux_for_python_x.yaml
     with:
@@ -105,6 +107,7 @@ jobs:
       WITHOUT_POOCH: ${{ matrix.WITHOUT_POOCH }}
       PIP_FLAGS: ${{ matrix.PIP_FLAGS }}
       PYTHONOPTIMIZE: ${{ matrix.PYTHONOPTIMIZE }}
+      INSTALL_FROM_SDIST: ${{ matrix.INSTALL_FROM_SDIST }}
 
   test-linux-313:
     name: test-linux-cp3.13-${{ matrix.OPTIONS_NAME }}
@@ -176,12 +179,18 @@ jobs:
       EAGER_IMPORT: ${{ matrix.EAGER_IMPORT }}
       WITHOUT_POOCH: ${{ matrix.WITHOUT_POOCH }}
       PIP_FLAGS: ${{ matrix.PIP_FLAGS }}
-      PYTHONOPTIMIZE: ${{ matrix.PYTHONOPTIMIZE }}
+      # TODO
+      # PYTHONOPTIMIZE: ${{ matrix.PYTHONOPTIMIZE }}
 
   report-failures:
     runs-on: ubuntu-latest
     needs:
       [
+        build-linux-311,
+        build-linux-312,
+        build-linux-313,
+        build-linux-314,
+        build-linux-314t,
         test-linux-311,
         test-linux-312,
         test-linux-313,
