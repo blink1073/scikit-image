@@ -66,14 +66,14 @@ jobs:
           path: ./dist
 
       - name: Install wheel
-        if: ${{ matrix.INSTALL_FROM_SDIST != 1 }}
+        if: ${{ inputs.INSTALL_FROM_SDIST != 1 }}
         env:
           PIP_FLAGS: ${{ inputs.PIP_FLAGS }}
         run: |
           pip install dist/*.whl
 
       - name: Install sdist
-        if: ${{ matrix.INSTALL_FROM_SDIST == 1 }}
+        if: ${{ inputs.INSTALL_FROM_SDIST == 1 }}
         env:
           PIP_FLAGS: ${{ inputs.PIP_FLAGS }}
         run: |
