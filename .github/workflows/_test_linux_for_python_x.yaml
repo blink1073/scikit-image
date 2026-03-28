@@ -89,4 +89,7 @@ jobs:
           MINIMUM_REQUIREMENTS: ${{ inputs.MINIMUM_REQUIREMENTS }}
           PYTHONOPTIMIZE: ${{ inputs.PYTHONOPTIMIZE }}
         run: |
-          $PYTEST --doctest-plus --showlocals --pyargs skimage ./tests
+          if [ "${PYTHONOPTIMIZE:-0}" != "0" ]; then
+            EXTRA_FLAGS="-W ignore::pytest.PytestConfigWarning"
+          fi
+          $PYTEST ${EXTRA_FLAGS} --doctest-plus --showlocals --pyargs skimage ./tests
