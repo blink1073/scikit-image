@@ -169,16 +169,23 @@ def test(*, parent_callback, test_modified=False, doctest=False, **kwargs):
 
         # Map module names to their test and (optionally) source directories.
         # src-layout: tests live outside src/, doctests live inside src/.
+        # _skimage2 tests live in tests/skimage2/ (not tests/_skimage2/)
+        # skimage2 doctests live in src/_skimage2/ (not src/skimage2/)
         test_paths = []
+        seen = set()
         for mod in sorted(changed_modules):
             mod_path = mod.replace('.', '/')
-            test_dir = os.path.join('tests', mod_path)
-            if os.path.isdir(test_dir):
+            test_path = mod_path.replace('_skimage2/', 'skimage2/', 1)
+            test_dir = os.path.join('tests', test_path)
+            if test_dir not in seen and os.path.isdir(test_dir):
                 test_paths.append(test_dir)
+                seen.add(test_dir)
             if doctest:
-                src_dir = os.path.join('src', mod_path)
-                if os.path.isdir(src_dir):
+                src_path = mod_path.replace('skimage2/', '_skimage2/', 1)
+                src_dir = os.path.join('src', src_path)
+                if src_dir not in seen and os.path.isdir(src_dir):
                     test_paths.append(src_dir)
+                    seen.add(src_dir)
 
         pytest_args = pytest_args + tuple(test_paths)
 
