@@ -118,6 +118,9 @@ def test(*, parent_callback, test_modified=False, doctest=False, **kwargs):
         pkg_mods = {f'skimage.{attr}' for attr in dir(pkg) if not attr.startswith('_')}
         pkg_mods |= {'skimage._shared', 'skimage.filters.rank'}
         pkg_mods -= {'skimage.__version__'}
+        # Include changes to skimage2 and _skimage2
+        pkg_mods |= {pkg.replace("skimage.", "skimage2.") for pkg in pkg_mods}
+        pkg_mods |= {pkg.replace("skimage.", "_skimage2.") for pkg in pkg_mods}
 
         p = spin.util.run(
             ['git', 'merge-base', 'main', 'HEAD'], output=False, echo=False
@@ -134,6 +137,23 @@ def test(*, parent_callback, test_modified=False, doctest=False, **kwargs):
 
         git_diff = p.stdout.decode('utf-8')
         changed_modules = {mod for mod in pkg_mods if mod.replace('.', '/') in git_diff}
+
+        # Cross-package expansion:
+        # - skimage.X or _skimage2.X changed → also test skimage2.X
+        # - skimage2.X or _skimage2.X changed → also test skimage.X
+        companions = {
+            'skimage.': ['skimage2.'],
+            'skimage2.': ['skimage.'],
+            '_skimage2.': ['skimage.', 'skimage2.'],
+        }
+        expanded = set(changed_modules)
+        for mod in changed_modules:
+            for prefix, targets in companions.items():
+                if mod.startswith(prefix):
+                    base = mod[len(prefix) :]
+                    expanded.update(t + base for t in targets if t + base in pkg_mods)
+                    break
+        changed_modules = expanded
 
         if not changed_modules:
             click.secho("No modified skimage modules detected.", fg="yellow")
