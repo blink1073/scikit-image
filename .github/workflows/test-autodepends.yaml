@@ -63,7 +63,10 @@ jobs:
           spin build
 
       - name: "Run tests: modified modules"
+        env:
+          BASE_REF: ${{ github.base_ref }}
         run: |
+          git fetch origin "$BASE_REF"
           pip uninstall -y SimpleITK  # Causes np.lookfor test to fail 🤔
 
           spin test --test-modified --doctest -- --config-file ${{ github.workspace }}/pyproject.toml
