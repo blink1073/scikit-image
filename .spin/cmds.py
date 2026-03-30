@@ -132,6 +132,12 @@ def test(
         pkg_mods |= {pkg.replace("skimage.", "_skimage2.") for pkg in pkg_mods}
 
         base_ref = base_ref or os.environ.get('GITHUB_BASE_REF') or 'main'
+        # In CI, the base branch is only available as origin/<base_ref> after fetch
+        p = spin.util.run(
+            ['git', 'rev-parse', '--verify', base_ref], output=False, echo=False
+        )
+        if p.returncode != 0:
+            base_ref = f'origin/{base_ref}'
 
         p = spin.util.run(
             ['git', 'merge-base', base_ref, 'HEAD'], output=False, echo=False
