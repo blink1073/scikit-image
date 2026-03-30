@@ -102,8 +102,17 @@ Use an editable install (`spin install`) which supports this or avoid passing
     help="Test only modified submodules",
 )
 @click.option("--doctest/--no-doctest", default=True, help="Whether to run doctests.")
+@click.option(
+    "--base-ref",
+    default=None,
+    help=(
+        "Base ref for detecting modified modules (default: $GITHUB_BASE_REF or 'main')"
+    ),
+)
 @spin.util.extend_command(spin.cmds.meson.test)
-def test(*, parent_callback, test_modified=False, doctest=False, **kwargs):
+def test(
+    *, parent_callback, test_modified=False, doctest=False, base_ref=None, **kwargs
+):
     import importlib
 
     pytest_args = kwargs.get('pytest_args', ())
@@ -122,18 +131,20 @@ def test(*, parent_callback, test_modified=False, doctest=False, **kwargs):
         pkg_mods |= {pkg.replace("skimage.", "skimage2.") for pkg in pkg_mods}
         pkg_mods |= {pkg.replace("skimage.", "_skimage2.") for pkg in pkg_mods}
 
+        base_ref = base_ref or os.environ.get('GITHUB_BASE_REF') or 'main'
+
         p = spin.util.run(
-            ['git', 'merge-base', 'main', 'HEAD'], output=False, echo=False
+            ['git', 'merge-base', base_ref, 'HEAD'], output=False, echo=False
         )
         if p.returncode != 0:
-            raise click.ClickException('Could not find merge base with main')
+            raise click.ClickException(f'Could not find merge base with {base_ref!r}')
         merge_base = p.stdout.decode('utf-8').strip()
 
         p = spin.util.run(
             ['git', 'diff', merge_base, '--name-only'], output=False, echo=False
         )
         if p.returncode != 0:
-            raise click.ClickException('Could not git-diff against main')
+            raise click.ClickException(f'Could not git-diff against {base_ref!r}')
 
         git_diff = p.stdout.decode('utf-8')
         changed_modules = {mod for mod in pkg_mods if mod.replace('.', '/') in git_diff}
