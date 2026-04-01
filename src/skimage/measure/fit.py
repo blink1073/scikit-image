@@ -1088,7 +1088,6 @@ class EllipseModel(_BaseModel):
         success : bool
             True, if model estimation succeeds.
 
-
         References
         ----------
         .. [1] Halir, R.; Flusser, J. "Numerically stable direct least squares

@@ -20,8 +20,10 @@ __pycache__
 temp.tif
 .ropeproject
 doc/source/api
+doc/source/api2
 doc/build
 source/api
+source/api2
 build
 build-install
 dist

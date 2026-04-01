@@ -336,17 +336,14 @@ def peak_local_max(
     ...      [0, 0, 2, 0, 0, 0, 0],
     ...      [0, 0, 0, 0, 0, 0, 0]]
     ... )
-
-    Find all peaks
+    >>> # Find all peaks
     >>> ski2.feature.peak_local_max(image)
     array([[3, 2],
            [3, 4]])
-
-    Ensure peaks are at least 2 pixels apart
+    >>> # Ensure peaks are at least 2 pixels apart
     >>> ski2.feature.peak_local_max(image, min_distance=2)
     array([[3, 2]])
-
-    Allow peaks on the image border
+    >>> # Allow peaks on the image border
     >>> ski2.feature.peak_local_max(image, exclude_border=0)
     array([[3, 2],
            [3, 4],

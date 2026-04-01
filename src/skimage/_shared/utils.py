@@ -711,7 +711,7 @@ class deprecate_func:
         if wrapped.__doc__ is None:
             wrapped.__doc__ = doc
         else:
-            wrapped.__doc__ = doc + '\n\n    ' + wrapped.__doc__
+            wrapped.__doc__ = doc + '\n\n' + inspect.cleandoc(wrapped.__doc__)
 
         return wrapped
 
