@@ -72,25 +72,27 @@ if __name__ == '__main__':
     try:
         __import__(package2)
     except ImportError:
-        abort("Can not import _skimage2")
-
-    outdir2 = 'source/api2'
-    docwriter2 = ApiDocWriter(package2, display_package_name='skimage2')
-    docwriter2.package_skip_patterns += [r'\.tests$']
-    docwriter2.write_api_docs(outdir2)
-    docwriter2.write_index(
-        outdir2,
-        'api2',
-        relative_to='source/api2',
-        title="skimage2 API reference (experimental)",
-        include_license=False,
-    )
-
-    if len(docwriter2.written_modules) <= 1:
-        msg = (
-            f"expected more _skimage2 modules, only wrote files for: "
-            f"{docwriter2.written_modules!r}"
+        print(
+            '*WARNING* skimage2 API documentation not generated: cannot import _skimage2'
         )
-        raise RuntimeWarning(msg)
     else:
-        print(f'{len(docwriter2.written_modules)} _skimage2 files written')
+        outdir2 = 'source/api2'
+        docwriter2 = ApiDocWriter(package2, display_package_name='skimage2')
+        docwriter2.package_skip_patterns += [r'\.tests$']
+        docwriter2.write_api_docs(outdir2)
+        docwriter2.write_index(
+            outdir2,
+            'api2',
+            relative_to='source/api2',
+            title="skimage2 API reference (experimental)",
+            include_license=False,
+        )
+
+        if len(docwriter2.written_modules) <= 1:
+            msg = (
+                f"expected more _skimage2 modules, only wrote files for: "
+                f"{docwriter2.written_modules!r}"
+            )
+            raise RuntimeWarning(msg)
+        else:
+            print(f'{len(docwriter2.written_modules)} _skimage2 files written')
