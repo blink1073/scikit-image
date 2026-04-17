@@ -79,6 +79,7 @@ class ApiDocWriter:
         self.rst_extension = rst_extension
         self.package_skip_patterns = package_skip_patterns
         self.module_skip_patterns = module_skip_patterns
+        self.module_preamble = None
 
     def get_package_name(self):
         return self._package_name
@@ -304,6 +305,9 @@ class ApiDocWriter:
         title = ':mod:`' + display_uri + '`'
         ad += title + '\n' + self.rst_section_levels[1] * len(title) + '\n\n'
 
+        if self.module_preamble is not None:
+            ad += self.module_preamble + '\n\n'
+
         ad += '.. automodule:: ' + display_uri + '\n\n'
         ad += '.. currentmodule:: ' + display_uri + '\n\n'
         ad += '.. autosummary::\n   :nosignatures:\n\n'
@@ -451,6 +455,7 @@ class ApiDocWriter:
         relative_to=None,
         title="API reference",
         include_license=True,
+        preamble=None,
     ):
         """Make a reST API index file from the written files.
 
@@ -466,6 +471,9 @@ class ApiDocWriter:
             component of the written file path will be removed from
             outdir, in the generated index. Default is None, meaning,
             leave path as it is.
+        preamble : str, optional
+            Optional reStructuredText to insert between the page title and
+            the toctree.  Useful for adding warnings or notices.
         """
         if self.written_modules is None:
             raise ValueError('No modules written')
@@ -488,6 +496,9 @@ class ApiDocWriter:
 
             w(title + "\n")
             w("=" * len(title) + "\n\n")
+
+            if preamble is not None:
+                w(preamble + "\n\n")
 
             w('.. toctree::\n')
             w('   :maxdepth: 1\n\n')

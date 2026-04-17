@@ -47,24 +47,37 @@ Quick links
 
 .. only:: skimage2_available
 
-    .. grid:: 1
+    .. grid:: 2
         :gutter: 3
 
-        .. grid-item-card:: :octicon:`beaker` skimage2 API reference (experimental)
+        .. grid-item-card:: :octicon:`tools` Contribute
+            :link: development/contribute
+            :link-type: any
+
+            Saw a typo? Found a bug? Want to improve a function? Learn how to
+            contribute to scikit-image!
+
+        .. grid-item-card:: :octicon:`beaker` Experimental: skimage2 API reference
             :link: api2/api2
             :link-type: any
 
-            API reference for the experimental v2 namespace. Subject to change.
+            API reference for the **experimental** v2 namespace (``skimage2``).
+            The experimental API is subject to change without notice.
+
+.. only:: not skimage2_available
+
+    .. grid:: 2
+        :gutter: 3
+
+        .. grid-item-card:: :octicon:`tools` Contribute
+            :link: development/contribute
+            :link-type: any
+
+            Saw a typo? Found a bug? Want to improve a function? Learn how to
+            contribute to scikit-image!
 
 .. grid:: 2
     :gutter: 3
-
-    .. grid-item-card:: :octicon:`tools` Contribute
-        :link: development/contribute
-        :link-type: any
-
-        Saw a typo? Found a bug? Want to improve a function? Learn how to
-        contribute to scikit-image!
 
     .. grid-item-card:: :octicon:`history` Release notes
         :link: release_notes/index

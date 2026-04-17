@@ -79,13 +79,26 @@ if __name__ == '__main__':
         outdir2 = 'source/api2'
         docwriter2 = ApiDocWriter(package2, display_package_name='skimage2')
         docwriter2.package_skip_patterns += [r'\.tests$']
+        docwriter2.module_preamble = (
+            ".. warning::\n\n"
+            "   This module is part of the **experimental** ``skimage2`` namespace"
+            " and is subject to change without notice.\n"
+            "   Do not use it in production code."
+        )
         docwriter2.write_api_docs(outdir2)
         docwriter2.write_index(
             outdir2,
             'api2',
             relative_to='source/api2',
-            title="skimage2 API reference (experimental)",
+            title="Experimental: skimage2 API reference",
             include_license=False,
+            preamble=(
+                ".. warning::\n\n"
+                "   ``skimage2`` is **experimental** and subject to change without"
+                " notice.\n"
+                "   The API may be altered or removed in any future release.\n"
+                "   Do not use it in production code."
+            ),
         )
 
         if len(docwriter2.written_modules) <= 1:
