@@ -83,7 +83,8 @@ if __name__ == '__main__':
             ".. warning::\n\n"
             "   This module is part of the **experimental** ``skimage2`` namespace"
             " and is subject to change without notice.\n"
-            "   Do not use it in production code."
+            "   Do not use it in production code.\n"
+            "   See the :ref:`migration guide <skimage2-migration>` for more details."
         )
         docwriter2.write_api_docs(outdir2)
         docwriter2.write_index(
@@ -97,7 +98,9 @@ if __name__ == '__main__':
                 "   ``skimage2`` is **experimental** and subject to change without"
                 " notice.\n"
                 "   The API may be altered or removed in any future release.\n"
-                "   Do not use it in production code."
+                "   Do not use it in production code.\n"
+                "   See the :ref:`migration guide <skimage2-migration>` for more "
+                "details."
             ),
         )
 
