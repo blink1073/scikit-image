@@ -69,7 +69,10 @@ if __name__ == '__main__':
         print(f'{len(docwriter.written_modules)} files written')
 
     package2 = '_skimage2'
-    __import__(package2)
+    try:
+        __import__(package2)
+    except ImportError:
+        abort("Can not import skimage2")
 
     outdir2 = 'source/api2'
     docwriter2 = ApiDocWriter(package2, display_package_name='skimage2')
