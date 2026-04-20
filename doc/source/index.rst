@@ -45,36 +45,19 @@ Quick links
         A detailed description of scikit-image's public Python API. Assumes an
         understanding of the key concepts.
 
-.. only:: skimage2_available
+    .. grid-item-card:: :octicon:`beaker` Experimental: skimage2 API reference
+        :link: api2/api2
+        :link-type: any
 
-    .. grid:: 2
-        :gutter: 3
+        API reference for the **experimental** v2 namespace (``skimage2``).
+        The experimental API is subject to change without notice.
 
-        .. grid-item-card:: :octicon:`tools` Contribute
-            :link: development/contribute
-            :link-type: any
+    .. grid-item-card:: :octicon:`tools` Contribute
+        :link: development/contribute
+        :link-type: any
 
-            Saw a typo? Found a bug? Want to improve a function? Learn how to
-            contribute to scikit-image!
-
-        .. grid-item-card:: :octicon:`beaker` Experimental: skimage2 API reference
-            :link: api2/api2
-            :link-type: any
-
-            API reference for the **experimental** v2 namespace (``skimage2``).
-            The experimental API is subject to change without notice.
-
-.. only:: not skimage2_available
-
-    .. grid:: 2
-        :gutter: 3
-
-        .. grid-item-card:: :octicon:`tools` Contribute
-            :link: development/contribute
-            :link-type: any
-
-            Saw a typo? Found a bug? Want to improve a function? Learn how to
-            contribute to scikit-image!
+        Saw a typo? Found a bug? Want to improve a function? Learn how to
+        contribute to scikit-image!
 
 .. grid:: 2
     :gutter: 3
@@ -109,13 +92,7 @@ See also our site-wide :ref:`genindex` our
     user_guide/index
     auto_examples/index
     api/api
+    skimage2 API <api2/api2>
     release_notes/index
     development/index
     about/index
-
-.. only:: skimage2_available
-
-    .. toctree::
-        :hidden:
-
-        skimage2 API <api2/api2>
