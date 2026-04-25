@@ -99,7 +99,6 @@ jobs:
       OPTIONS_NAME: ${{ matrix.OPTIONS_NAME }}
       MINIMUM_REQUIREMENTS: ${{ matrix.MINIMUM_REQUIREMENTS }}
       OPTIONAL_DEPS: ${{ matrix.OPTIONAL_DEPS }}
-      EAGER_IMPORT: ${{ matrix.EAGER_IMPORT }}
       WITHOUT_POOCH: ${{ matrix.WITHOUT_POOCH }}
       PIP_FLAGS: ${{ matrix.PIP_FLAGS }}
       PYTHONOPTIMIZE: ${{ matrix.PYTHONOPTIMIZE }}
@@ -124,10 +123,8 @@ jobs:
       OPTIONS_NAME: ${{ matrix.OPTIONS_NAME }}
       MINIMUM_REQUIREMENTS: ${{ matrix.MINIMUM_REQUIREMENTS }}
       OPTIONAL_DEPS: ${{ matrix.OPTIONAL_DEPS }}
-      EAGER_IMPORT: ${{ matrix.EAGER_IMPORT }}
       WITHOUT_POOCH: ${{ matrix.WITHOUT_POOCH }}
       PIP_FLAGS: ${{ matrix.PIP_FLAGS }}
-      PYTHONOPTIMIZE: ${{ matrix.PYTHONOPTIMIZE }}
 
   test-linux-314:
     name: test-linux-cp3.14-${{ matrix.OPTIONS_NAME }}
@@ -148,10 +145,8 @@ jobs:
       OPTIONS_NAME: ${{ matrix.OPTIONS_NAME }}
       MINIMUM_REQUIREMENTS: ${{ matrix.MINIMUM_REQUIREMENTS }}
       OPTIONAL_DEPS: ${{ matrix.OPTIONAL_DEPS }}
-      EAGER_IMPORT: ${{ matrix.EAGER_IMPORT }}
       WITHOUT_POOCH: ${{ matrix.WITHOUT_POOCH }}
       PIP_FLAGS: ${{ matrix.PIP_FLAGS }}
-      PYTHONOPTIMIZE: ${{ matrix.PYTHONOPTIMIZE }}
 
   test-linux-314t:
     name: test-linux-cp3.14t-${{ matrix.OPTIONS_NAME }}
@@ -172,11 +167,8 @@ jobs:
       OPTIONS_NAME: ${{ matrix.OPTIONS_NAME }}
       MINIMUM_REQUIREMENTS: ${{ matrix.MINIMUM_REQUIREMENTS }}
       OPTIONAL_DEPS: ${{ matrix.OPTIONAL_DEPS }}
-      EAGER_IMPORT: ${{ matrix.EAGER_IMPORT }}
       WITHOUT_POOCH: ${{ matrix.WITHOUT_POOCH }}
       PIP_FLAGS: ${{ matrix.PIP_FLAGS }}
-      # TODO
-      # PYTHONOPTIMIZE: ${{ matrix.PYTHONOPTIMIZE }}
 
   report-failures:
     runs-on: ubuntu-latest
