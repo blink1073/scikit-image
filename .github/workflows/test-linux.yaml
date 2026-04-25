@@ -44,14 +44,10 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        # Dependency options for setup-test-env.sh
         OPTIONS_NAME: ["main"]
-        MINIMUM_REQUIREMENTS: [0]
-        OPTIONAL_DEPS: [0]
-        WITHOUT_POOCH: [0]
-        PIP_FLAGS: [""]
 
         include:
+          # Dependency options for setup-test-env.sh
           - MINIMUM_REQUIREMENTS: 1
             OPTIONAL_DEPS: 0
             EAGER_IMPORT: 1
@@ -62,12 +58,9 @@ jobs:
     uses: ./.github/workflows/_test_linux_for_python_x.yaml
     with:
       python-version: 3.11
-      OPTIONS_NAME: ${{ matrix.OPTIONS_NAME }}
       MINIMUM_REQUIREMENTS: ${{ matrix.MINIMUM_REQUIREMENTS }}
       OPTIONAL_DEPS: ${{ matrix.OPTIONAL_DEPS }}
       EAGER_IMPORT: ${{ matrix.EAGER_IMPORT }}
-      WITHOUT_POOCH: ${{ matrix.WITHOUT_POOCH }}
-      PIP_FLAGS: ${{ matrix.PIP_FLAGS }}
 
   test-linux-312:
     name: test-linux-cp3.12-${{ matrix.OPTIONS_NAME }}
@@ -75,14 +68,10 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        # Dependency options for setup-test-env.sh
         OPTIONS_NAME: ["main"]
-        MINIMUM_REQUIREMENTS: [0]
-        OPTIONAL_DEPS: [0]
-        WITHOUT_POOCH: [0]
-        PIP_FLAGS: [""]
 
         include:
+          # Dependency options for setup-test-env.sh
           - PIP_FLAGS: "--pre"
             OPTIONS_NAME: "pre"
           - OPTIONAL_DEPS: 1
@@ -97,7 +86,6 @@ jobs:
     with:
       python-version: 3.12
       OPTIONS_NAME: ${{ matrix.OPTIONS_NAME }}
-      MINIMUM_REQUIREMENTS: ${{ matrix.MINIMUM_REQUIREMENTS }}
       OPTIONAL_DEPS: ${{ matrix.OPTIONAL_DEPS }}
       WITHOUT_POOCH: ${{ matrix.WITHOUT_POOCH }}
       PIP_FLAGS: ${{ matrix.PIP_FLAGS }}
@@ -105,70 +93,21 @@ jobs:
       INSTALL_FROM_SDIST: ${{ matrix.INSTALL_FROM_SDIST }}
 
   test-linux-313:
-    name: test-linux-cp3.13-${{ matrix.OPTIONS_NAME }}
+    name: test-linux-cp3.13-main
     needs: [build-linux-313]
-    strategy:
-      fail-fast: false
-      matrix:
-        # Dependency options for setup-test-env.sh
-        OPTIONS_NAME: ["main"]
-        MINIMUM_REQUIREMENTS: [0]
-        OPTIONAL_DEPS: [0]
-        WITHOUT_POOCH: [0]
-        PIP_FLAGS: [""]
-
     uses: ./.github/workflows/_test_linux_for_python_x.yaml
     with:
       python-version: 3.13
-      OPTIONS_NAME: ${{ matrix.OPTIONS_NAME }}
-      MINIMUM_REQUIREMENTS: ${{ matrix.MINIMUM_REQUIREMENTS }}
-      OPTIONAL_DEPS: ${{ matrix.OPTIONAL_DEPS }}
-      WITHOUT_POOCH: ${{ matrix.WITHOUT_POOCH }}
-      PIP_FLAGS: ${{ matrix.PIP_FLAGS }}
 
   test-linux-314:
-    name: test-linux-cp3.14-${{ matrix.OPTIONS_NAME }}
+    name: test-linux-cp3.14-main
     needs: [build-linux-314]
-    strategy:
-      fail-fast: false
-      matrix:
-        # Dependency options for setup-test-env.sh
-        OPTIONS_NAME: ["main"]
-        MINIMUM_REQUIREMENTS: [0]
-        OPTIONAL_DEPS: [0]
-        WITHOUT_POOCH: [0]
-        PIP_FLAGS: [""]
-
     uses: ./.github/workflows/_test_linux_for_python_x.yaml
-    with:
-      python-version: 3.14
-      OPTIONS_NAME: ${{ matrix.OPTIONS_NAME }}
-      MINIMUM_REQUIREMENTS: ${{ matrix.MINIMUM_REQUIREMENTS }}
-      OPTIONAL_DEPS: ${{ matrix.OPTIONAL_DEPS }}
-      WITHOUT_POOCH: ${{ matrix.WITHOUT_POOCH }}
-      PIP_FLAGS: ${{ matrix.PIP_FLAGS }}
 
   test-linux-314t:
-    name: test-linux-cp3.14t-${{ matrix.OPTIONS_NAME }}
+    name: test-linux-cp3.14t-main
     needs: [build-linux-314t]
-    strategy:
-      fail-fast: false
-      matrix:
-        # Dependency options for setup-test-env.sh
-        OPTIONS_NAME: ["main"]
-        MINIMUM_REQUIREMENTS: [0]
-        OPTIONAL_DEPS: [0]
-        WITHOUT_POOCH: [0]
-        PIP_FLAGS: [""]
-
     uses: ./.github/workflows/_test_linux_for_python_x.yaml
-    with:
-      python-version: 3.14t
-      OPTIONS_NAME: ${{ matrix.OPTIONS_NAME }}
-      MINIMUM_REQUIREMENTS: ${{ matrix.MINIMUM_REQUIREMENTS }}
-      OPTIONAL_DEPS: ${{ matrix.OPTIONAL_DEPS }}
-      WITHOUT_POOCH: ${{ matrix.WITHOUT_POOCH }}
-      PIP_FLAGS: ${{ matrix.PIP_FLAGS }}
 
   report-failures:
     runs-on: ubuntu-latest
