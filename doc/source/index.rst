@@ -59,9 +59,6 @@ Quick links
         Saw a typo? Found a bug? Want to improve a function? Learn how to
         contribute to scikit-image!
 
-.. grid:: 2
-    :gutter: 3
-
     .. grid-item-card:: :octicon:`history` Release notes
         :link: release_notes/index
         :link-type: any
