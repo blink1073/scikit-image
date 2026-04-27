@@ -422,11 +422,12 @@ class ApiDocWriter:
             api_str = self.generate_api_doc(m)
             if not api_str:
                 continue
-            # write out to file
-            outfile = os.path.join(outdir, m + self.rst_extension)
+            # write out to file using display name so URLs omit leading underscores
+            display_m = m.replace(self.package_name, self.display_package_name, 1)
+            outfile = os.path.join(outdir, display_m + self.rst_extension)
             with open(outfile, 'w') as fileobj:
                 fileobj.write(api_str)
-            written_modules.append(m)
+            written_modules.append(display_m)
         self.written_modules = written_modules
 
     def write_api_docs(self, outdir):
