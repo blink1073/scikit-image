@@ -22,19 +22,22 @@ all: html
 
 help:
 	@echo "Please use \`make <target>' where <target> is one of"
-	@echo "  html      to make standalone HTML files"
-	@echo "  dirhtml   to make HTML files named index.html in directories"
-	@echo "  pickle    to make pickle files"
-	@echo "  json      to make JSON files"
-	@echo "  htmlhelp  to make HTML files and a HTML help project"
-	@echo "  qthelp    to make HTML files and a qthelp project"
-	@echo "  devhelp   to make HTML files and a Devhelp project"
-	@echo "  latex     to make LaTeX files, you can set PAPER=a4 or PAPER=letter"
-	@echo "  latexpdf  to make LaTeX files and run them through pdflatex"
-	@echo "  changes   to make an overview of all changed/added/deprecated items"
-	@echo "  linkcheck to check all external links for integrity"
-	@echo "  doctest   to run all doctests embedded in the documentation (if enabled)"
-	@echo "  gitwash   to update the gitwash documentation"
+	@echo "  html           to make standalone HTML files"
+	@echo "  dirhtml        to make HTML files named index.html in directories"
+	@echo "  pickle         to make pickle files"
+	@echo "  json           to make JSON files"
+	@echo "  htmlhelp       to make HTML files and a HTML help project"
+	@echo "  qthelp         to make HTML files and a qthelp project"
+	@echo "  devhelp        to make HTML files and a Devhelp project"
+	@echo "  latex          to make LaTeX files, you can set PAPER=a4 or PAPER=letter"
+	@echo "  latexpdf       to make LaTeX files and run them through pdflatex"
+	@echo "  changes        to make an overview of all changed/added/deprecated items"
+	@echo "  linkcheck      to check all external links for integrity"
+	@echo "  doctest        to run all doctests embedded in the documentation (if enabled)"
+	@echo "  gitwash        to update the gitwash documentation"
+	@echo "  api            to build the API docs"
+	@echo "  migration-doc  to build the Skimage2 migration doc"
+	@echo "  migration-test to run the Skimage2 migration string doctests"
 
 clean:
 	-rm -rf $(DEST)
@@ -47,9 +50,13 @@ api:
 	$(PYTHON) tools/build_modref_templates.py
 	@echo "Build API docs...done."
 
-migration-doc:
-	$(PYTHON) tools/build_migration.py $(MIGRATION_TPL) --doctest
+migration-doc: $(MIGRATION_TPL)
+	$(PYTHON) tools/build_migration.py $<
 	@echo "Build migration template...done."
+
+migration-test:
+	$(PYTHON) tools/doctest_migration.py
+	@echo "Run migration tests...done."
 
 html: migration-doc api
 	$(SPHINXBUILD) -b html $(ALLSPHINXOPTS) $(DEST)/html
