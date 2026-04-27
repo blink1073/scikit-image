@@ -3,10 +3,8 @@
 
 from argparse import ArgumentParser, RawDescriptionHelpFormatter
 
-from pathlib import Path
 import sys
 
-from jinja2 import Template
 
 from migration_utils import get_doc_dicts, write_migration, run_doctests
 
@@ -28,9 +26,7 @@ def main():
     parser = get_parser()
     args = parser.parse_args()
     doc_dict, extra_dict = get_doc_dicts()
-    write_migration(args.migration_tpl,
-                    {**doc_dict, **extra_dict},
-                    args.out_rst)
+    write_migration(args.migration_tpl, {**doc_dict, **extra_dict}, args.out_rst)
     if args.doctest:
         success, msg = run_doctests(doc_dict)
         print(msg)

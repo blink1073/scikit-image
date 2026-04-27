@@ -1,5 +1,4 @@
-""" Utilities for migration CLI tools
-"""
+"""Utilities for migration CLI tools"""
 
 import doctest
 from functools import partial
