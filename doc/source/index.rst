@@ -88,7 +88,7 @@ See also our site-wide :ref:`genindex` our
 
     user_guide/index
     auto_examples/index
-    api/api
+    skimage API <api/api>
     skimage2 API <api2/api2>
     release_notes/index
     development/index
