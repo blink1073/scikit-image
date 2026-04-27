@@ -5,8 +5,8 @@ import warnings
 import numpy as np
 import pytest
 
-from skimage._shared import testing
-from skimage._shared.utils import (
+from _skimage2._shared import testing
+from _skimage2._shared.utils import (
     _supported_float_type,
     _validate_interpolation_order,
     change_default_value,
@@ -81,7 +81,8 @@ def test_change_default_value():
 
 
 def test_check_nD():
-    z = np.random.random(200**2).reshape((200, 200))
+    rng = np.random.RandomState(2089165084)
+    z = rng.random(200**2).reshape((200, 200))
     x = z[10:30, 30:10]
     with testing.raises(ValueError):
         check_nD(x, 2)

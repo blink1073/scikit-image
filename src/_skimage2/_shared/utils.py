@@ -268,7 +268,7 @@ class deprecate_parameter:
 
     Examples
     --------
-    >>> from skimage._shared.utils import deprecate_parameter, DEPRECATED
+    >>> from _skimage2._shared.utils import deprecate_parameter, DEPRECATED
     >>> @deprecate_parameter(
     ...     "b", new_name="c", start_version="0.1", stop_version="0.3"
     ... )
@@ -766,9 +766,11 @@ def _update_from_estimate_docstring(cls):
 
     inherited_class_name = inherited_cmeth.__qualname__.split('.')[-2]
 
-    from_estimate.__doc__ = inherited_cmeth.__doc__.replace(
-        inherited_class_name, cls.__name__
-    )
+    # `if` necessary in optimized mode, where docstrings may be missing.
+    if inherited_cmeth.__doc__:
+        from_estimate.__doc__ = inherited_cmeth.__doc__.replace(
+            inherited_class_name, cls.__name__
+        )
     from_estimate.__signature__ = inspect.signature(inherited_cmeth)
 
     cls.from_estimate = classmethod(from_estimate)
@@ -970,7 +972,7 @@ def convert_to_float(image, preserve_range):
             image = image.astype(float)
     else:
         # Avoid circular import
-        from ..util.dtype import img_as_float
+        from skimage.util.dtype import img_as_float
 
         image = img_as_float(image)
     return image
