@@ -36,8 +36,8 @@ help:
 	@echo "  doctest        to run all doctests embedded in the documentation (if enabled)"
 	@echo "  gitwash        to update the gitwash documentation"
 	@echo "  api            to build the API docs"
-	@echo "  migration-doc  to build the Skimage2 migration doc"
-	@echo "  migration-test to run the Skimage2 migration string doctests"
+	@echo "  migration-doc  to build the skimage2 migration doc"
+	@echo "  migration-test to run the skimage2 migration string doctests"
 
 clean:
 	-rm -rf $(DEST)
@@ -55,8 +55,9 @@ migration-doc: $(MIGRATION_TPL)
 	@echo "Build migration template...done."
 
 migration-test:
+	@echo -n "Run migration tests..."
 	$(PYTHON) tools/doctest_migration.py
-	@echo "Run migration tests...done."
+	@echo "done."
 
 html: migration-doc api
 	$(SPHINXBUILD) -b html $(ALLSPHINXOPTS) $(DEST)/html
