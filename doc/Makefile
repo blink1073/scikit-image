@@ -51,8 +51,9 @@ api:
 	@echo "Build API docs...done."
 
 migration-doc: $(MIGRATION_TPL)
+	@echo -n "Build migration doc..."
 	$(PYTHON) tools/build_migration.py $<
-	@echo "Build migration template...done."
+	@echo "done."
 
 migration-test:
 	@echo -n "Run migration tests..."

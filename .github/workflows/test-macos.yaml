@@ -78,10 +78,6 @@ jobs:
         run: |
           $PYTEST --showlocals ./tests
 
-      - name: Run migration doctests
-        run: |
-          python doc/tools/doctest_migration.py
-
       - name: Check benchmarks
         run: |
           asv check -v -E existing
