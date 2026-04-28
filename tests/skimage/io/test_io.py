@@ -134,13 +134,16 @@ def test_plugin_deprecation_on_imread(kwarg):
     # tifffile raises "DeprecationWarning: Setting the shape on a NumPy array
     # has been deprecated in NumPy 2.5" on NumPy >= 2.5 — suppress until fixed
     # upstream. TODO: remove once tifffile > 2026.4.11 is released.
-    with warnings.catch_warnings():
-        warnings.filterwarnings(
-            "ignore",
-            message="Setting the shape on a NumPy array",
-            category=DeprecationWarning,
-        )
-        with pytest.warns(FutureWarning, match=regex) as record:
+    with pytest.warns(FutureWarning, match=regex) as record:
+        # tifffile raises "DeprecationWarning: Setting the shape on a NumPy array
+        # has been deprecated in NumPy 2.5" — suppress until fixed upstream.
+        # TODO: remove once tifffile > 2026.4.11 is released.
+        with warnings.catch_warnings():
+            warnings.filterwarnings(
+                "ignore",
+                message="Setting the shape on a NumPy array",
+                category=DeprecationWarning,
+            )
             io.imread(path, **kwarg)
     assert len(record) == 1
     assert_stacklevel(record, offset=-2)
