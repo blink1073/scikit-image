@@ -16,7 +16,7 @@ DEST            = build
 
 MIGRATION_TPL = source/user_guide/skimage2_migration.rst.tpl
 
-.PHONY: all help clean html dirhtml pickle json htmlhelp qthelp latex changes linkcheck doctest gitwash release_notes
+.PHONY: all help clean api migration-doc migration-test html api dirhtml pickle json htmlhelp qthelp devhelp latex latexpdf changes linkcheck doctest gitwash
 
 all: html
 
