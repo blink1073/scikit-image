@@ -103,11 +103,17 @@ jobs:
     name: test-linux-cp3.14-main
     needs: [build-linux-314]
     uses: ./.github/workflows/_test_linux_for_python_x.yaml
+    with:
+      python-version: 3.14
+      OPTIONS_NAME: "main"
 
   test-linux-314t:
     name: test-linux-cp3.14t-main
     needs: [build-linux-314t]
     uses: ./.github/workflows/_test_linux_for_python_x.yaml
+    with:
+      python-version: 3.14t
+      OPTIONS_NAME: "main"
 
   report-failures:
     runs-on: ubuntu-latest
