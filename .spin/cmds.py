@@ -95,6 +95,90 @@ Use an editable install (`spin install`) which supports this or avoid passing
 """
 
 
+def _get_skimage_modules(build_dir):
+    """Return the set of all skimage/skimage2/_skimage2 submodule names."""
+    import importlib
+
+    p = spin.cmds.meson._set_pythonpath(build_dir, quiet=True)
+    sys.path.insert(0, p)
+
+    pkg = importlib.import_module('skimage')
+    pkg_mods = {f'skimage.{attr}' for attr in dir(pkg) if not attr.startswith('_')}
+    pkg_mods |= {'skimage._shared', 'skimage.filters.rank'}
+    pkg_mods -= {'skimage.__version__'}
+    # Include changes to skimage2 and _skimage2
+    pkg_mods |= {mod.replace("skimage.", "skimage2.") for mod in pkg_mods}
+    pkg_mods |= {mod.replace("skimage.", "_skimage2.") for mod in pkg_mods}
+    return pkg_mods
+
+
+def _get_changed_modules(base_ref, pkg_mods):
+    """Return the set of changed modules relative to *base_ref*, with cross-package expansion."""
+    base_ref = base_ref or os.environ.get('GITHUB_BASE_REF') or 'main'
+    # In CI, the base branch is only available as origin/<base_ref> after fetch
+    p = spin.util.run(
+        ['git', 'rev-parse', '--verify', base_ref], output=False, echo=False
+    )
+    if p.returncode != 0:
+        base_ref = f'origin/{base_ref}'
+
+    p = spin.util.run(['git', 'merge-base', base_ref, 'HEAD'], output=False, echo=False)
+    if p.returncode != 0:
+        raise click.ClickException(f'Could not find merge base with {base_ref!r}')
+    merge_base = p.stdout.decode('utf-8').strip()
+
+    p = spin.util.run(
+        ['git', 'diff', merge_base, '--name-only'], output=False, echo=False
+    )
+    if p.returncode != 0:
+        raise click.ClickException(f'Could not git-diff against {base_ref!r}')
+
+    git_diff = p.stdout.decode('utf-8')
+    changed_modules = {mod for mod in pkg_mods if mod.replace('.', '/') in git_diff}
+
+    # Cross-package expansion:
+    # - skimage.X or _skimage2.X changed → also test skimage2.X
+    # - skimage2.X or _skimage2.X changed → also test skimage.X
+    companions = {
+        'skimage.': ['skimage2.'],
+        'skimage2.': ['skimage.'],
+        '_skimage2.': ['skimage.', 'skimage2.'],
+    }
+    expanded = set(changed_modules)
+    for mod in changed_modules:
+        for prefix, targets in companions.items():
+            if mod.startswith(prefix):
+                base = mod[len(prefix) :]
+                expanded.update(t + base for t in targets if t + base in pkg_mods)
+                break
+    return expanded
+
+
+def _get_test_paths(changed_modules, doctest):
+    """Map module names to their test and (optionally) source directories.
+
+    src-layout: tests live outside src/, doctests live inside src/.
+    _skimage2 tests live in tests/skimage2/ (not tests/_skimage2/)
+    skimage2 doctests live in src/_skimage2/ (not src/skimage2/)
+    """
+    test_paths = []
+    seen = set()
+    for mod in sorted(changed_modules):
+        mod_path = mod.replace('.', '/')
+        test_path = mod_path.replace('_skimage2/', 'skimage2/', 1)
+        test_dir = os.path.join('tests', test_path)
+        if test_dir not in seen and os.path.isdir(test_dir):
+            test_paths.append(test_dir)
+            seen.add(test_dir)
+        if doctest:
+            src_path = mod_path.replace('skimage2/', '_skimage2/', 1)
+            src_dir = os.path.join('src', src_path)
+            if src_dir not in seen and os.path.isdir(src_dir):
+                test_paths.append(src_dir)
+                seen.add(src_dir)
+    return test_paths
+
+
 @click.option(
     "--test-modified",
     is_flag=True,
@@ -113,64 +197,15 @@ Use an editable install (`spin install`) which supports this or avoid passing
 def test(
     *, parent_callback, test_modified=False, doctest=False, base_ref=None, **kwargs
 ):
-    import importlib
-
     pytest_args = kwargs.get('pytest_args', ())
 
     if test_modified:
+        if "--pyargs" in pytest_args:
+            raise RuntimeError("--test-modified will override --pyargs")
+
         build_dir = kwargs.get('build_dir', 'build')
-        # Ensure spin-built version of skimage is accessible
-        p = spin.cmds.meson._set_pythonpath(build_dir, quiet=True)
-        sys.path.insert(0, p)
-
-        pkg = importlib.import_module('skimage')
-        pkg_mods = {f'skimage.{attr}' for attr in dir(pkg) if not attr.startswith('_')}
-        pkg_mods |= {'skimage._shared', 'skimage.filters.rank'}
-        pkg_mods -= {'skimage.__version__'}
-        # Include changes to skimage2 and _skimage2
-        pkg_mods |= {pkg.replace("skimage.", "skimage2.") for pkg in pkg_mods}
-        pkg_mods |= {pkg.replace("skimage.", "_skimage2.") for pkg in pkg_mods}
-
-        base_ref = base_ref or os.environ.get('GITHUB_BASE_REF') or 'main'
-        # In CI, the base branch is only available as origin/<base_ref> after fetch
-        p = spin.util.run(
-            ['git', 'rev-parse', '--verify', base_ref], output=False, echo=False
-        )
-        if p.returncode != 0:
-            base_ref = f'origin/{base_ref}'
-
-        p = spin.util.run(
-            ['git', 'merge-base', base_ref, 'HEAD'], output=False, echo=False
-        )
-        if p.returncode != 0:
-            raise click.ClickException(f'Could not find merge base with {base_ref!r}')
-        merge_base = p.stdout.decode('utf-8').strip()
-
-        p = spin.util.run(
-            ['git', 'diff', merge_base, '--name-only'], output=False, echo=False
-        )
-        if p.returncode != 0:
-            raise click.ClickException(f'Could not git-diff against {base_ref!r}')
-
-        git_diff = p.stdout.decode('utf-8')
-        changed_modules = {mod for mod in pkg_mods if mod.replace('.', '/') in git_diff}
-
-        # Cross-package expansion:
-        # - skimage.X or _skimage2.X changed → also test skimage2.X
-        # - skimage2.X or _skimage2.X changed → also test skimage.X
-        companions = {
-            'skimage.': ['skimage2.'],
-            'skimage2.': ['skimage.'],
-            '_skimage2.': ['skimage.', 'skimage2.'],
-        }
-        expanded = set(changed_modules)
-        for mod in changed_modules:
-            for prefix, targets in companions.items():
-                if mod.startswith(prefix):
-                    base = mod[len(prefix) :]
-                    expanded.update(t + base for t in targets if t + base in pkg_mods)
-                    break
-        changed_modules = expanded
+        pkg_mods = _get_skimage_modules(build_dir)
+        changed_modules = _get_changed_modules(base_ref, pkg_mods)
 
         if not changed_modules:
             click.secho("No modified skimage modules detected.", fg="yellow")
@@ -181,29 +216,7 @@ def test(
             fg="green",
         )
 
-        if "--pyargs" in pytest_args:
-            raise RuntimeError("--test-modified will override --pyargs")
-
-        # Map module names to their test and (optionally) source directories.
-        # src-layout: tests live outside src/, doctests live inside src/.
-        # _skimage2 tests live in tests/skimage2/ (not tests/_skimage2/)
-        # skimage2 doctests live in src/_skimage2/ (not src/skimage2/)
-        test_paths = []
-        seen = set()
-        for mod in sorted(changed_modules):
-            mod_path = mod.replace('.', '/')
-            test_path = mod_path.replace('_skimage2/', 'skimage2/', 1)
-            test_dir = os.path.join('tests', test_path)
-            if test_dir not in seen and os.path.isdir(test_dir):
-                test_paths.append(test_dir)
-                seen.add(test_dir)
-            if doctest:
-                src_path = mod_path.replace('skimage2/', '_skimage2/', 1)
-                src_dir = os.path.join('src', src_path)
-                if src_dir not in seen and os.path.isdir(src_dir):
-                    test_paths.append(src_dir)
-                    seen.add(src_dir)
-
+        test_paths = _get_test_paths(changed_modules, doctest)
         pytest_args = pytest_args + tuple(test_paths)
 
     is_out_of_tree_build = not _is_editable_install_of_same_source("scikit-image")
