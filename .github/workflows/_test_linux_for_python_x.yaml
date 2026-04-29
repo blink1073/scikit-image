@@ -99,6 +99,7 @@ jobs:
           # A lazy loader configuration parameter
           EAGER_IMPORT: ${{ inputs.EAGER_IMPORT }}
           MINIMUM_REQUIREMENTS: ${{ inputs.MINIMUM_REQUIREMENTS }}
+          PYTHONOPTIMIZE: ${{ inputs.PYTHONOPTIMIZE }}
         run: |
           $PYTEST --doctest-plus --showlocals --pyargs skimage ./tests
 
