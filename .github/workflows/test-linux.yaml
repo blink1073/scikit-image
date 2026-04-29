@@ -99,6 +99,7 @@ jobs:
     uses: ./.github/workflows/_test_linux_for_python_x.yaml
     with:
       python-version: 3.13
+      OPTIONS_NAME: "main"
 
   test-linux-314:
     name: test-linux-cp3.14-main
