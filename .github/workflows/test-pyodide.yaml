@@ -3,6 +3,10 @@
 name: Test Pyodide
 
 on:
+  push:
+    branches:
+      - main
+      - maintenance/**
   pull_request:
     branches:
       - main
@@ -11,6 +15,7 @@ on:
       - "**.pyi"
       - "**.md"
       - "**.rst"
+  merge_group:
 
 permissions:
   contents: read # to fetch code (actions/checkout)
