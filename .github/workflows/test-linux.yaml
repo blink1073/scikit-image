@@ -62,7 +62,6 @@ jobs:
       MINIMUM_REQUIREMENTS: ${{ matrix.MINIMUM_REQUIREMENTS }}
       OPTIONAL_DEPS: ${{ matrix.OPTIONAL_DEPS }}
       EAGER_IMPORT: ${{ matrix.EAGER_IMPORT }}
-      EAGER_IMPORT: ${{ matrix.EAGER_IMPORT }}
 
   test-linux-312:
     name: test-linux-cp3.12-${{ matrix.OPTIONS_NAME }}
