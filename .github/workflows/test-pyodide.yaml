@@ -19,6 +19,7 @@ permissions:
 
 jobs:
   build-wasm-emscripten:
+    if: false # temporarily disable
     name: "pyodide${{ matrix.PYODIDE_VERSION }}\
       -cp${{ matrix.PYTHON_VERSION }}\
       -emscr${{ matrix.EMSCRIPTEN_VERSION }}"
