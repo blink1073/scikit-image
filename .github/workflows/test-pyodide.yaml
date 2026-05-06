@@ -43,3 +43,6 @@ jobs:
         env:
           CIBW_PLATFORM: pyodide
           CIBW_BUILD: cp313-pyodide_wasm32
+          CIBW_ENVIRONMENT: >-
+            CCACHE_DIR=/tmp/ccache
+            _EMCC_CCACHE=1
