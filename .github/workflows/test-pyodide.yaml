@@ -27,6 +27,12 @@ jobs:
         with:
           persist-credentials: false
 
+      - name: Install ccache
+        run: |
+          sudo apt-get install -y ccache
+          mkdir -p /tmp/ccache
+          ccache --max-size=500M
+
       - name: Cache ccache output
         uses: actions/cache@27d5ce7f107fe9357f9df03efb73ab90386fccae # v5.0.5
         with:
