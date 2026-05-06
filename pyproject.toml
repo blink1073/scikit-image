@@ -301,6 +301,6 @@ before-all = [
 ]
 
 [tool.cibuildwheel.pyodide]
-test-command = "pip list"
+test-command = "micropip -h"
 test-extras = ["test"]
 # test-extras = ["test", "optional_free_threaded"]
