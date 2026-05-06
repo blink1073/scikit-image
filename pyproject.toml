@@ -302,6 +302,6 @@ before-all = [
 
 [tool.cibuildwheel.pyodide]
 # See https://pyodide.org/en/stable/usage/cli.html
-build-frontend = { name = "pip", args = ["--no-build", "--extra-index-url", "https://index.pyodide.org/0.28.3/", "--index-strategy", "unsafe-best-match]" ] }
+environment = { PIP_EXTRA_INDEX_URL="https://index.pyodide.org/0.28.3/" }
 test-command = "pytest"
 test-extras = ["test", "optional_free_threaded"]
