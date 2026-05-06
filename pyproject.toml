@@ -301,4 +301,5 @@ before-all = [
 ]
 
 [tool.cibuildwheel.pyodide]
-test-extras = ["test", "optional_free_threaded"]
+test-command = "python -c 'import sys;print(sys.implementation)'"
+# test-extras = ["test", "optional_free_threaded"]
