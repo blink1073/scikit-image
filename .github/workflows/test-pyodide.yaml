@@ -46,4 +46,9 @@ jobs:
           CIBW_ENVIRONMENT: >-
             CCACHE_DIR=/tmp/ccache
             _EMCC_CCACHE=1
-          CIBW_BEFORE_BUILD: touch -t 202101010000 $EM_CONFIG
+          CIBW_BEFORE_BUILD: >-
+            python3 -c "import os,shutil,pathlib;
+            e=shutil.which('emcc');
+            e and [os.utime(str(p/'.emscripten'),(0,0))
+            for p in pathlib.Path(e).parents
+            if (p/'.emscripten').exists()][:1]"
