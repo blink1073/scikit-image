@@ -301,6 +301,6 @@ before-all = [
 ]
 
 [tool.cibuildwheel.pyodide]
-test-command = "python -m 'import asyncio,micropip; asyncio.run(await micropip.install(\"matplotlib\")'; pip list"
+test-command = "python -m 'import asyncio; import micropip; asyncio.run(await micropip.install(\"matplotlib\")'; pip list"
 test-extras = ["test"]
 # test-extras = ["test", "optional_free_threaded"]
