@@ -9,6 +9,7 @@ permissions:
 
 env:
   FORCE_COLOR: 3
+  CCACHE_DIR: /tmp/ccache
 
 concurrency:
   group: ${{ github.workflow }}-${{ github.head_ref || github.run_id }}
@@ -19,14 +20,63 @@ jobs:
     name: Pyodide test
     runs-on: ubuntu-22.04
     # To enable this workflow on a fork, comment out:
-    if: github.repository == 'scikit-image/scikit-image'
+    # if: github.repository == 'scikit-image/scikit-image'
     steps:
       - name: Checkout scikit-image
         uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
         with:
           persist-credentials: false
 
+      - name: Install ccache
+        run: |
+          sudo apt-get install -y ccache
+          mkdir -p /tmp/ccache
+          ccache --max-size=500M
+
+      - name: Cache ccache output
+        uses: actions/cache@27d5ce7f107fe9357f9df03efb73ab90386fccae # v5.0.5
+        with:
+          path: /tmp/ccache
+          key: ${{ runner.os }}-pyodide-ccache-${{ github.run_id }}
+          restore-keys: ${{ runner.os }}-pyodide-ccache-
+
+      - name: Cache cibuildwheel
+        uses: actions/cache@27d5ce7f107fe9357f9df03efb73ab90386fccae # v5.0.5
+        with:
+          path: /home/runner/.cache/cibuildwheel
+          key: ${{ runner.os }}-cibuildwheel-${{ hashFiles('pyproject.toml') }}
+          restore-keys: ${{ runner.os }}-cibuildwheel-
+
+      - name: Check restored ccache
+        run: |
+          echo "=== ccache stats after restore ==="
+          ccache -s
+          pre_calls=$(ccache -s | awk '/^\s+Hits:/ {print $4; exit}')
+          echo "CCACHE_PRE_BUILD_CALLS=${pre_calls:-0}" >> "$GITHUB_ENV"
+
+      - name: Reset ccache stats
+        run: ccache -z
+
       - uses: pypa/cibuildwheel@8d2b08b68458a16aeb24b64e68a09ab1c8e82084 # v3.4.1
         env:
           CIBW_PLATFORM: pyodide
           CIBW_BUILD: cp313-pyodide_wasm32
+          CIBW_ENVIRONMENT: "EM_COMPILER_WRAPPER=/tmp/ccache-clang-wrapper CCACHE_DIR=/tmp/ccache CCACHE_COMPILERCHECK=content CCACHE_BASEDIR=/home/runner/work CCACHE_LOGFILE=/tmp/ccache.log"
+          CIBW_BEFORE_BUILD: bash {project}/.github/scripts/setup_emscripten_ccache.sh
+
+      - name: Show ccache stats
+        run: ccache -s
+
+      - name: Verify ccache hits
+        run: |
+          hits=$(ccache -s | awk '/^\s+Hits:/ {print $2; exit}')
+          total=$(ccache -s | awk '/^\s+Hits:/ {print $4; exit}')
+          echo "ccache: ${hits} hits / ${total} calls (prior cache had ${CCACHE_PRE_BUILD_CALLS} calls)"
+          if [[ "${total:-0}" -eq 0 ]]; then
+            echo "ERROR: ccache was not invoked during the build" >&2
+            exit 1
+          fi
+          if [[ "${CCACHE_PRE_BUILD_CALLS:-0}" -gt 0 && "${hits:-0}" -eq 0 ]]; then
+            echo "ERROR: cache was warm but got 0 hits — ccache regression" >&2
+            exit 1
+          fi
