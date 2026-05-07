@@ -37,7 +37,8 @@ jobs:
         uses: actions/cache@27d5ce7f107fe9357f9df03efb73ab90386fccae # v5.0.5
         with:
           path: /tmp/ccache
-          key: ${{ hashFiles('pyproject.toml') }}-${{ runner.os }}-pyodide-ccache
+          key: ${{ runner.os }}-pyodide-ccache-${{ github.run_id }}
+          restore-keys: ${{ runner.os }}-pyodide-ccache-
 
       - name: Reset ccache stats
         run: ccache -z

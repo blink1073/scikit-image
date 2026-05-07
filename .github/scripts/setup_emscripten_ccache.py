@@ -47,5 +47,3 @@ if not em_config.exists():
 
 print(f"Fixing mtime of {em_config}")
 os.utime(em_config, (0, 0))
-print(f"EM_COMPILER_WRAPPER={os.environ.get('EM_COMPILER_WRAPPER', '(not set)')}")
-print(f"CCACHE_DIR={os.environ.get('CCACHE_DIR', '(not set)')}")
