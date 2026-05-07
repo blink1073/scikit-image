@@ -1,18 +1,21 @@
 #!/usr/bin/env python3
-"""Fix the mtime of the emscripten config file to prevent ccache misses.
+"""Set up ccache for emscripten builds.
 
-Emscripten's ccache integration (EM_COMPILER_WRAPPER=ccache) hashes the
-mtime of .emscripten as part of the compiler fingerprint. Since emsdk
-recreates this file on every activation, we reset its mtime to a fixed
-value so ccache sees a stable fingerprint across CI runs.
+Creates a ccache wrapper for emcc so that ccache sees the original source
+file paths (not emscripten's internal temp files with random names). Also
+fixes the mtime of the emscripten config file to prevent ccache misses.
 
-COMPILER_WRAPPER is set via EM_COMPILER_WRAPPER env var (not here), since
-emscripten's config loader checks EM_<KEY> env vars for each CONFIG_KEY.
+Background: when EM_COMPILER_WRAPPER=ccache is used, emscripten preprocesses
+source files to /tmp/tmpXXX.c temp files with random names before calling
+clang. ccache then hashes those random names, causing misses every run. By
+wrapping emcc itself (before the temp files are created), ccache sees the
+original stable source paths.
 """
 
 import os
 import pathlib
 import shutil
+import stat
 import sys
 
 emcc = shutil.which("emcc")
@@ -47,3 +50,14 @@ if not em_config.exists():
 
 print(f"Fixing mtime of {em_config}")
 os.utime(em_config, (0, 0))
+
+# Create a ccache wrapper for emcc so ccache sees the original source file
+# paths rather than emscripten's internal temp files. The wrapper must use an
+# absolute path to the real emcc to avoid infinite recursion (the wrapper dir
+# is prepended to PATH by CIBW_ENVIRONMENT).
+wrapper_dir = pathlib.Path("/tmp/emcc-wrapper")
+wrapper_dir.mkdir(exist_ok=True)
+wrapper = wrapper_dir / "emcc"
+wrapper.write_text(f"#!/bin/bash\nexec ccache {emcc} \"$@\"\n")
+wrapper.chmod(wrapper.stat().st_mode | stat.S_IEXEC | stat.S_IXGRP | stat.S_IXOTH)
+print(f"Created emcc wrapper: {wrapper} -> ccache {emcc}")
