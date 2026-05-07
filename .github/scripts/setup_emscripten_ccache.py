@@ -1,15 +1,17 @@
 #!/usr/bin/env python3
 """Set up ccache for emscripten builds.
 
-Creates a ccache wrapper for emcc so that ccache sees the original source
-file paths (not emscripten's internal temp files with random names). Also
-fixes the mtime of the emscripten config file to prevent ccache misses.
+Creates a custom EM_COMPILER_WRAPPER script that normalizes emscripten's
+random temp file names to content-hash-based paths so ccache sees stable
+source file paths across runs. Also fixes the mtime of the emscripten config
+file to prevent ccache compiler-fingerprint misses.
 
-Background: when EM_COMPILER_WRAPPER=ccache is used, emscripten preprocesses
-source files to /tmp/tmpXXX.c temp files with random names before calling
-clang. ccache then hashes those random names, causing misses every run. By
-wrapping emcc itself (before the temp files are created), ccache sees the
-original stable source paths.
+Background: emscripten preprocesses source files to /tmp/tmpXXX.c temp files
+with random names before calling clang. When EM_COMPILER_WRAPPER=ccache is
+used, ccache hashes those random names as part of the preprocessed content,
+causing misses every run. Our wrapper intercepts the clang invocation and
+replaces the random path with /tmp/ccache-src/<sha256>.c so ccache always
+sees the same path for the same content.
 """
 
 import os
@@ -51,13 +53,41 @@ if not em_config.exists():
 print(f"Fixing mtime of {em_config}")
 os.utime(em_config, (0, 0))
 
-# Create a ccache wrapper for emcc so ccache sees the original source file
-# paths rather than emscripten's internal temp files. The wrapper must use an
-# absolute path to the real emcc to avoid infinite recursion (the wrapper dir
-# is prepended to PATH by CIBW_ENVIRONMENT).
-wrapper_dir = pathlib.Path("/tmp/emcc-wrapper")
-wrapper_dir.mkdir(exist_ok=True)
-wrapper = wrapper_dir / "emcc"
-wrapper.write_text(f"#!/bin/bash\nexec ccache {emcc} \"$@\"\n")
+# Create the EM_COMPILER_WRAPPER script. Emscripten calls it as:
+#   <wrapper> <clang_path> [clang_args...]
+#
+# The wrapper normalizes /tmp/tmpXXX.c temp files (random names created by
+# emscripten before calling clang) to /tmp/ccache-src/<sha256>.c so ccache
+# sees a stable, content-derived path rather than a random one.
+wrapper = pathlib.Path("/tmp/ccache-clang-wrapper.py")
+wrapper.write_text("""\
+#!/usr/bin/env python3
+import hashlib
+import os
+import pathlib
+import sys
+
+SRC_CACHE = pathlib.Path("/tmp/ccache-src")
+SRC_CACHE.mkdir(exist_ok=True)
+
+# argv: [this_script, clang_path, ...clang_args...]
+clang = sys.argv[1]
+args = list(sys.argv[2:])
+
+# Replace random /tmp/tmpXXX.c with a content-hash-based stable path.
+for i, arg in enumerate(args):
+    if arg == "-c" and i + 1 < len(args):
+        src = pathlib.Path(args[i + 1])
+        if src.exists() and src.suffix == ".c" and src.name.startswith("tmp") and str(src).startswith("/tmp/"):
+            content = src.read_bytes()
+            h = hashlib.sha256(content).hexdigest()
+            stable = SRC_CACHE / f"{h}.c"
+            if not stable.exists():
+                stable.write_bytes(content)
+            args[i + 1] = str(stable)
+        break
+
+os.execvp("ccache", ["ccache", clang] + args)
+""")
 wrapper.chmod(wrapper.stat().st_mode | stat.S_IEXEC | stat.S_IXGRP | stat.S_IXOTH)
-print(f"Created emcc wrapper: {wrapper} -> ccache {emcc}")
+print(f"Created EM_COMPILER_WRAPPER: {wrapper}")

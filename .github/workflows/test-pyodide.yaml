@@ -61,7 +61,7 @@ jobs:
         env:
           CIBW_PLATFORM: pyodide
           CIBW_BUILD: cp313-pyodide_wasm32
-          CIBW_ENVIRONMENT: "PATH=/tmp/emcc-wrapper:$PATH CCACHE_DIR=/tmp/ccache CCACHE_COMPILERCHECK=content CCACHE_BASEDIR=/home/runner/work CCACHE_LOGFILE=/tmp/ccache.log"
+          CIBW_ENVIRONMENT: "EM_COMPILER_WRAPPER=/tmp/ccache-clang-wrapper.py CCACHE_DIR=/tmp/ccache CCACHE_COMPILERCHECK=content CCACHE_BASEDIR=/home/runner/work CCACHE_LOGFILE=/tmp/ccache.log"
           CIBW_BEFORE_BUILD: python3 {project}/.github/scripts/setup_emscripten_ccache.py
 
       - name: Show ccache stats
