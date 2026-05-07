@@ -47,6 +47,13 @@ jobs:
           key: ${{ runner.os }}-cibuildwheel-${{ hashFiles('pyproject.toml') }}
           restore-keys: ${{ runner.os }}-cibuildwheel-
 
+      - name: Check restored ccache
+        run: |
+          echo "=== ccache stats after restore ==="
+          ccache -s
+          echo "=== /tmp/ccache contents ==="
+          ls -laR /tmp/ccache/ | head -40
+
       - name: Reset ccache stats
         run: ccache -z
 
@@ -54,8 +61,11 @@ jobs:
         env:
           CIBW_PLATFORM: pyodide
           CIBW_BUILD: cp313-pyodide_wasm32
-          CIBW_ENVIRONMENT: "CCACHE_DIR=/tmp/ccache EM_COMPILER_WRAPPER=ccache CCACHE_COMPILERCHECK=content CCACHE_BASEDIR=/home/runner/work"
+          CIBW_ENVIRONMENT: "CCACHE_DIR=/tmp/ccache EM_COMPILER_WRAPPER=ccache CCACHE_COMPILERCHECK=content CCACHE_BASEDIR=/home/runner/work CCACHE_LOGFILE=/tmp/ccache.log"
           CIBW_BEFORE_BUILD: python3 {project}/.github/scripts/setup_emscripten_ccache.py
 
       - name: Show ccache stats
-        run: ccache -s
+        run: |
+          ccache -s
+          echo "=== ccache log (first 100 lines) ==="
+          head -100 /tmp/ccache.log || true
