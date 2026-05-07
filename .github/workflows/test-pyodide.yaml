@@ -43,12 +43,5 @@ jobs:
         env:
           CIBW_PLATFORM: pyodide
           CIBW_BUILD: cp313-pyodide_wasm32
-          CIBW_ENVIRONMENT: >-
-            CCACHE_DIR=/tmp/ccache
-            COMPILER_WRAPPER=ccache
-          CIBW_BEFORE_BUILD: >-
-            python3 -c "import os,shutil,pathlib;
-            e=shutil.which('emcc');
-            e and [os.utime(str(p/'.emscripten'),(0,0))
-            for p in pathlib.Path(e).parents
-            if (p/'.emscripten').exists()][:1]"
+          CIBW_ENVIRONMENT: CCACHE_DIR=/tmp/ccache
+          CIBW_BEFORE_BUILD: python3 {project}/.github/scripts/setup_emscripten_ccache.py
