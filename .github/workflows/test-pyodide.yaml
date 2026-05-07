@@ -43,5 +43,5 @@ jobs:
         env:
           CIBW_PLATFORM: pyodide
           CIBW_BUILD: cp313-pyodide_wasm32
-          CIBW_ENVIRONMENT: CCACHE_DIR=/tmp/ccache
+          CIBW_ENVIRONMENT: "CCACHE_DIR=/tmp/ccache EM_COMPILER_WRAPPER=ccache"
           CIBW_BEFORE_BUILD: python3 {project}/.github/scripts/setup_emscripten_ccache.py

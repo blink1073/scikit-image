@@ -1,10 +1,13 @@
 #!/usr/bin/env python3
-"""Configure emscripten to use ccache by modifying the .emscripten config file.
+"""Fix the mtime of the emscripten config file to prevent ccache misses.
 
-COMPILER_WRAPPER in emscripten 4.x is a config-file key, not an env var.
-Emcc reads config from: EM_CONFIG env var → ~/.emscripten → walk up from emcc.
-We also fix the mtime to 0 so ccache sees a stable fingerprint across runs
-even though emsdk recreates the file on each activation.
+Emscripten's ccache integration (EM_COMPILER_WRAPPER=ccache) hashes the
+mtime of .emscripten as part of the compiler fingerprint. Since emsdk
+recreates this file on every activation, we reset its mtime to a fixed
+value so ccache sees a stable fingerprint across CI runs.
+
+COMPILER_WRAPPER is set via EM_COMPILER_WRAPPER env var (not here), since
+emscripten's config loader checks EM_<KEY> env vars for each CONFIG_KEY.
 """
 
 import os
@@ -17,40 +20,30 @@ if not emcc:
     print("emcc not found in PATH", file=sys.stderr)
     sys.exit(1)
 
-print(f"emcc: {emcc}")
-print(f"EM_CONFIG env: {os.environ.get('EM_CONFIG', '(not set)')}")
-
-# Mirror emcc's own config-file search order
+# Mirror emcc's own config-file search order (see emscripten/tools/config.py)
 em_config_path = os.environ.get("EM_CONFIG")
 if em_config_path:
     em_config = pathlib.Path(em_config_path)
 else:
-    home_config = pathlib.Path.home() / ".emscripten"
-    if home_config.exists():
-        em_config = home_config
-    else:
-        em_config = next(
-            (
-                p / ".emscripten"
-                for p in pathlib.Path(emcc).parents
-                if (p / ".emscripten").exists()
-            ),
-            None,
-        )
+    # embedded_config: .emscripten next to emcc itself
+    emscripten_root = pathlib.Path(emcc).parent
+    embedded = emscripten_root / ".emscripten"
+    # emsdk_embedded_config: two levels above emscripten root (emsdk root)
+    emsdk_root = emscripten_root.parent.parent
+    emsdk_embedded = emsdk_root / ".emscripten"
 
-if not em_config or not em_config.exists():
-    print("Could not find .emscripten config file", file=sys.stderr)
+    if embedded.exists():
+        em_config = embedded
+    elif emsdk_embedded.exists():
+        em_config = emsdk_embedded
+    else:
+        em_config = pathlib.Path.home() / ".emscripten"
+
+if not em_config.exists():
+    print(
+        f"Could not find .emscripten config file (tried: {em_config})", file=sys.stderr
+    )
     sys.exit(1)
 
-print(f"em_config: {em_config}")
-
-content = em_config.read_text()
-if "COMPILER_WRAPPER" not in content:
-    em_config.write_text(content + "\nCOMPILER_WRAPPER = 'ccache'\n")
-    print("Added COMPILER_WRAPPER = 'ccache'")
-else:
-    print("COMPILER_WRAPPER already present")
-
-# Fix mtime to prevent ccache misses caused by emsdk recreating this file
+print(f"Fixing mtime of {em_config}")
 os.utime(em_config, (0, 0))
-print(f"Fixed mtime of {em_config}")
