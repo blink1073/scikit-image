@@ -61,11 +61,13 @@ jobs:
         env:
           CIBW_PLATFORM: pyodide
           CIBW_BUILD: cp313-pyodide_wasm32
-          CIBW_ENVIRONMENT: "CCACHE_DIR=/tmp/ccache EM_COMPILER_WRAPPER=ccache CCACHE_COMPILERCHECK=content CCACHE_BASEDIR=/home/runner/work CCACHE_LOGFILE=/tmp/ccache.log"
+          CIBW_ENVIRONMENT: "CCACHE_DIR=/tmp/ccache EM_COMPILER_WRAPPER=ccache CCACHE_COMPILERCHECK=content CCACHE_BASEDIR=/ CCACHE_LOGFILE=/tmp/ccache.log"
           CIBW_BEFORE_BUILD: python3 {project}/.github/scripts/setup_emscripten_ccache.py
 
       - name: Show ccache stats
         run: |
           ccache -s
-          echo "=== ccache log (first 100 lines) ==="
-          head -100 /tmp/ccache.log || true
+          echo "=== ccache log (results and compiler info) ==="
+          grep -E "^[0-9]+ (Result|Compiler|cache_miss|cache_hit|Called for|Hash|Source)" /tmp/ccache.log | head -60 || true
+          echo "=== ccache log (first miss detail) ==="
+          head -80 /tmp/ccache.log || true
