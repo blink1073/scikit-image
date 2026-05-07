@@ -45,7 +45,7 @@ jobs:
           CIBW_BUILD: cp313-pyodide_wasm32
           CIBW_ENVIRONMENT: >-
             CCACHE_DIR=/tmp/ccache
-            _EMCC_CCACHE=1
+            COMPILER_WRAPPER=ccache
           CIBW_BEFORE_BUILD: >-
             python3 -c "import os,shutil,pathlib;
             e=shutil.which('emcc');
