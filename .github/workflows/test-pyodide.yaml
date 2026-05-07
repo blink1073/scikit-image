@@ -51,8 +51,8 @@ jobs:
         run: |
           echo "=== ccache stats after restore ==="
           ccache -s
-          echo "=== /tmp/ccache contents ==="
-          ls -laR /tmp/ccache/ | head -40
+          pre_calls=$(ccache -s | awk '/^\s+Hits:/ {print $4; exit}')
+          echo "CCACHE_PRE_BUILD_CALLS=${pre_calls:-0}" >> "$GITHUB_ENV"
 
       - name: Reset ccache stats
         run: ccache -z
@@ -61,13 +61,22 @@ jobs:
         env:
           CIBW_PLATFORM: pyodide
           CIBW_BUILD: cp313-pyodide_wasm32
-          CIBW_ENVIRONMENT: "EM_COMPILER_WRAPPER=/tmp/ccache-clang-wrapper.py CCACHE_DIR=/tmp/ccache CCACHE_COMPILERCHECK=content CCACHE_BASEDIR=/home/runner/work CCACHE_LOGFILE=/tmp/ccache.log"
-          CIBW_BEFORE_BUILD: python3 {project}/.github/scripts/setup_emscripten_ccache.py
+          CIBW_ENVIRONMENT: "EM_COMPILER_WRAPPER=/tmp/ccache-clang-wrapper CCACHE_DIR=/tmp/ccache CCACHE_COMPILERCHECK=content CCACHE_BASEDIR=/home/runner/work CCACHE_LOGFILE=/tmp/ccache.log"
+          CIBW_BEFORE_BUILD: bash {project}/.github/scripts/setup_emscripten_ccache.sh
 
       - name: Show ccache stats
+        run: ccache -s
+
+      - name: Verify ccache hits
         run: |
-          ccache -s
-          echo "=== ccache log (results and compiler info) ==="
-          grep -E "^[0-9]+ (Result|Compiler|cache_miss|cache_hit|Called for|Hash|Source)" /tmp/ccache.log | head -60 || true
-          echo "=== ccache log (first miss detail) ==="
-          head -80 /tmp/ccache.log || true
+          hits=$(ccache -s | awk '/^\s+Hits:/ {print $2; exit}')
+          total=$(ccache -s | awk '/^\s+Hits:/ {print $4; exit}')
+          echo "ccache: ${hits} hits / ${total} calls (prior cache had ${CCACHE_PRE_BUILD_CALLS} calls)"
+          if [[ "${total:-0}" -eq 0 ]]; then
+            echo "ERROR: ccache was not invoked during the build" >&2
+            exit 1
+          fi
+          if [[ "${CCACHE_PRE_BUILD_CALLS:-0}" -gt 0 && "${hits:-0}" -eq 0 ]]; then
+            echo "ERROR: cache was warm but got 0 hits — ccache regression" >&2
+            exit 1
+          fi
