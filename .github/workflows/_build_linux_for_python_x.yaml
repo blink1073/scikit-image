@@ -45,17 +45,9 @@ jobs:
         run: |
           source .github/scripts/setup-build-env.sh
 
-      - name: Cache apt packages
-        uses: actions/cache@v4
-        with:
-          path: /var/cache/apt/archives
-          key: apt-${{ runner.os }}-${{ hashFiles('.github/workflows/_build_linux_for_python_x.yaml') }}
-          restore-keys: |
-            apt-${{ runner.os }}-
-
       - name: Install and configure ccache
         run: |
-          sudo apt-get install -y --no-install-recommends ccache
+          sudo apt-get install -y ccache
           sudo /usr/sbin/update-ccache-symlinks
           echo "/usr/lib/ccache" >> $GITHUB_PATH
 

@@ -2,7 +2,7 @@ name: Benchmark
 
 on:
   pull_request:
-    types: [labeled]
+    # types: [labeled]
   workflow_dispatch:
 
 concurrency:
@@ -15,7 +15,7 @@ permissions:
 
 jobs:
   benchmark:
-    if: contains(github.event.label.name, 'benchmark') || github.event_name == 'workflow_dispatch'
+    # if: contains(github.event.label.name, 'benchmark') || github.event_name == 'workflow_dispatch'
     name: Linux
     runs-on: ubuntu-latest
     env:
