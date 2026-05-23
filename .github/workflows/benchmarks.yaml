@@ -40,11 +40,19 @@ jobs:
           cache: "pip"
           cache-dependency-path: "requirements/*.txt"
 
+      - name: Cache apt packages
+        uses: actions/cache@v4
+        with:
+          path: /var/cache/apt/archives
+          key: apt-${{ runner.os }}-${{ hashFiles('.github/workflows/benchmarks.yaml') }}
+          restore-keys: |
+            apt-${{ runner.os }}-
+
       - name: Setup some dependencies
         shell: bash -l {0}
         run: |
           pip install asv
-          sudo apt-get update -y && sudo apt-get install -y ccache
+          sudo apt-get update -y && sudo apt-get install -y --no-install-recommends ccache
           # Make gcc/gxx symlinks first in path
           sudo /usr/sbin/update-ccache-symlinks
           echo "/usr/lib/ccache" >> $GITHUB_PATH
