@@ -14,6 +14,13 @@ jobs:
       contents: write # for Git to git push
     name: Build docs
     runs-on: ubuntu-latest
+    env:
+      CCACHE_BASEDIR: "${{ github.workspace }}"
+      CCACHE_DIR: "${{ github.workspace }}/.ccache"
+      CCACHE_COMPRESS: true
+      CCACHE_COMPRESSLEVEL: 6
+      CCACHE_MAXSIZE: 400M
+      CCACHE_SLOPPINESS: "pch_defines,time_macros"
     steps:
       - name: Checkout code
         uses: actions/checkout@v5
@@ -25,36 +32,34 @@ jobs:
           python-version: "3.12"
           cache: "pip"
           cache-dependency-path: "requirements/*.txt"
-      - name: Cache apt packages
-        uses: actions/cache@v4
-        with:
-          path: /var/cache/apt/archives
-          key: apt-${{ runner.os }}-${{ hashFiles('.github/workflows/build-docs.yaml') }}
-          restore-keys: |
-            apt-${{ runner.os }}-
-
       - name: Install dependencies
         run: |
-          sudo apt-get update -y
-          sudo apt-get install -y --no-install-recommends optipng
+          sudo apt install optipng ccache
+          sudo /usr/sbin/update-ccache-symlinks
+          echo "/usr/lib/ccache" >> $GITHUB_PATH
           python -m pip install --upgrade pip
           python -m pip install -r requirements/build.txt
           python -m pip install -r requirements/default.txt
           python -m pip install -r requirements/optional.txt
           python -m pip install -r requirements/docs.txt
+      - name: Restore/save ccache
+        uses: actions/cache@v4
+        with:
+          path: ${{ github.workspace }}/.ccache
+          key: ccache-${{ runner.os }}-docs-${{ github.sha }}
+          restore-keys: |
+            ccache-${{ runner.os }}-docs-
+      - name: Zero ccache stats
+        run: ccache --zero-stats
       - name: Install package
         run: |
           python -m pip install -v --no-build-isolation .
+      - name: ccache statistics
+        if: always()
+        run: ccache --show-stats
       - name: Run Skimage2 migration doctests
         run: |
           python doc/tools/run_migration_doctests.py
-      - name: Restore/save Sphinx cache
-        uses: actions/cache@v4
-        with:
-          path: ~/.cache/sphinx
-          key: sphinx-${{ runner.os }}-${{ github.sha }}
-          restore-keys: |
-            sphinx-${{ runner.os }}-
       - name: Push docs
         run: |
           eval "$(ssh-agent -s)"
@@ -62,7 +67,7 @@ jobs:
           # See https://github.community/t/github-actions-bot-email-address/17204/5
           git config --global user.email "41898282+github-actions[bot]@users.noreply.github.com"
           git config --global user.name "github-actions"
-          (cd doc && SPHINXCACHE=${HOME}/.cache/sphinx make html)
+          (cd doc && make html)
           git clone --quiet --branch=gh-pages "${GH_REF}" doc_build
           cd doc_build
           git rm -r dev
