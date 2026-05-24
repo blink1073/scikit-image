@@ -19,7 +19,7 @@ jobs:
     name: Pyodide test
     runs-on: ubuntu-22.04
     # To enable this workflow on a fork, comment out:
-    # if: github.repository == 'scikit-image/scikit-image'
+    if: github.repository == 'scikit-image/scikit-image'
     steps:
       - name: Checkout scikit-image
         uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
