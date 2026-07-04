@@ -16,6 +16,7 @@ from .. import __version__
 
 import os.path as osp
 import os
+import sys
 
 _LEGACY_DATA_DIR = osp.dirname(__file__)
 _DISTRIBUTION_DIR = osp.dirname(_LEGACY_DATA_DIR)
@@ -71,6 +72,75 @@ def _has_hash(path, expected_hash):
     return file_hash(path) == expected_hash
 
 
+def _stdlib_cache_dir():
+    """Return the download cache directory used when pooch is not installed.
+
+    Mirrors ``pooch.os_cache("scikit-image")`` closely enough for standalone
+    use, and honors the same ``SKIMAGE_DATADIR`` override so the cache
+    location is consistent whether or not pooch is installed.
+    """
+    env_dir = os.environ.get('SKIMAGE_DATADIR')
+    if env_dir:
+        return env_dir
+    if os.name == 'nt':
+        base = os.environ.get('LOCALAPPDATA', osp.expanduser('~'))
+    elif sys.platform == 'darwin':
+        base = osp.expanduser('~/Library/Caches')
+    else:
+        base = os.environ.get('XDG_CACHE_HOME', osp.expanduser('~/.cache'))
+    return osp.join(base, 'scikit-image')
+
+
+def _default_data_url(data_filename):
+    """Resolve the download URL for ``data_filename`` without requiring pooch.
+
+    Uses the explicit GitLab CDN URL from ``registry_urls`` when available,
+    otherwise falls back to the GitHub raw URL for the current version, the
+    same convention the pooch-based fetcher in ``_create_image_fetcher`` uses.
+    """
+    if data_filename in registry_urls:
+        return registry_urls[data_filename]
+
+    if '+git' in __version__:
+        version = __version__.replace('.dev0+git', '+git')
+    else:
+        version = __version__.replace('.dev', '+')
+    ref = 'main' if '+' in version else f'v{version}'
+    return (
+        f'https://github.com/scikit-image/scikit-image/raw/{ref}/'
+        f'src/_skimage2/{data_filename}'
+    )
+
+
+def _stdlib_download(url, dest_path, expected_hash):
+    """Download ``url`` to ``dest_path`` using only the standard library.
+
+    Verifies the sha256 hash before moving the file into place. Raises
+    ``ConnectionError`` on network failure and ``ValueError`` on a hash
+    mismatch, without leaving a partial or corrupt file behind.
+    """
+    import urllib.error
+    import urllib.request
+
+    os.makedirs(osp.dirname(dest_path), exist_ok=True)
+    tmp_path = dest_path + '.part'
+    try:
+        with urllib.request.urlopen(url, timeout=30) as response:
+            with open(tmp_path, 'wb') as fh:
+                shutil.copyfileobj(response, fh)
+    except (urllib.error.URLError, TimeoutError, ConnectionError) as err:
+        if osp.exists(tmp_path):
+            os.remove(tmp_path)
+        raise ConnectionError(f'Unable to download {url}') from err
+
+    if not _has_hash(tmp_path, expected_hash):
+        os.remove(tmp_path)
+        raise ValueError(f'Hash mismatch for file downloaded from {url}')
+
+    os.replace(tmp_path, dest_path)
+    return dest_path
+
+
 def _create_image_fetcher(prefix=None):
     try:
         import pooch
@@ -81,9 +151,9 @@ def _create_image_fetcher(prefix=None):
         else:
             retry = {'retry_if_failed': 3}
     except ImportError:
-        # Without pooch, fallback on the standard data directory
-        # which for now, includes a few limited data samples
-        return None, _LEGACY_DATA_DIR
+        # Without pooch, fall back to a stdlib urllib-based downloader (see
+        # `_stdlib_download`), using the same cache location pooch would use.
+        return None, osp.join(_stdlib_cache_dir(), 'data')
 
     # Pooch expects a `+` to exist in development versions.
     # Since scikit-image doesn't follow that convention, we have to manually
@@ -205,13 +275,15 @@ def _fetch(data_filename, prefix=None):
     KeyError:
         If the filename is not known to the scikit-image distribution.
 
-    ModuleNotFoundError:
-        If the filename is known to the scikit-image distribution but pooch
-        is not installed.
-
     ConnectionError:
         If scikit-image is unable to connect to the internet but the
-        dataset has not been downloaded yet.
+        dataset has not been downloaded yet. This applies whether or not
+        pooch is installed: without pooch, a stdlib ``urllib``-based
+        downloader is used instead.
+
+    ValueError:
+        If a file is downloaded (with or without pooch) but its hash does
+        not match the expected value.
     """
     if prefix is not None:
         return osp.join("tests", "skimage2", data_filename)
@@ -235,14 +307,21 @@ def _fetch(data_filename, prefix=None):
 
     # Case 3: file is not present locally
     if _image_fetcher is None:
+        # Under pytest (e.g. the WITHOUT_POOCH CI leg), always skip rather
+        # than attempting a real network download.
         _skip_pytest_case_requiring_pooch(data_filename)
-        raise ModuleNotFoundError(
-            "The requested file is part of the scikit-image distribution, "
-            "but requires the installation of an optional dependency, pooch. "
-            "To install pooch, use your preferred python package manager. "
-            "Follow installation instruction found at "
-            "https://scikit-image.org/docs/stable/user_guide/install.html"
-        )
+        _ensure_cache_dir(target_dir=cache_dir)
+        try:
+            url = _default_data_url(data_filename)
+            return _stdlib_download(url, cached_file_path, expected_hash)
+        except ConnectionError as err:
+            raise ConnectionError(
+                'Tried to download a scikit-image dataset without pooch '
+                'installed, but no internet connection is available. '
+                'Installing the optional pooch dependency adds retry '
+                'support; see '
+                'https://scikit-image.org/docs/stable/user_guide/install.html'
+            ) from err
     # Download the data with pooch which caches it automatically
     _ensure_cache_dir(target_dir=cache_dir)
     try:

@@ -55,6 +55,9 @@ build = [
     'spin>=0.13',
     'build>=1.2.1',
 ]
+# pooch adds retry/caching support for downloading example datasets.
+# Without it, `skimage.data` falls back to a stdlib `urllib`-based downloader
+# (see `_skimage2/data/_fetchers.py`), so this remains fully optional.
 data = ['pooch>=1.6.0']
 developer = [
     'pre-commit',
