@@ -263,6 +263,29 @@ def test_stdlib_download_connection_error(tmp_path):
     assert not Path(f'{dest_path}.part').exists()
 
 
+@pytest.mark.thread_unsafe(reason="mutates process-wide environment variables")
+def test_skip_pytest_case_requiring_pooch_fires_during_collection(monkeypatch):
+    """``PYTEST_VERSION`` is set for the whole session (including collection),
+    unlike ``PYTEST_CURRENT_TEST`` (only set while a test's call/setup/teardown
+    phase runs). Module- and class-level data fetches (e.g. ``IMG =
+    data.astronaut()``) execute during collection, so the guard must also
+    fire on ``PYTEST_VERSION`` alone."""
+    monkeypatch.delenv('PYTEST_CURRENT_TEST', raising=False)
+    monkeypatch.setenv('PYTEST_VERSION', '9.0.0')
+    with pytest.raises(pytest.skip.Exception):
+        _fetchers._skip_pytest_case_requiring_pooch('data/does_not_matter.png')
+
+
+@pytest.mark.thread_unsafe(reason="mutates process-wide environment variables")
+def test_skip_pytest_case_requiring_pooch_noop_outside_pytest(monkeypatch):
+    """Without any pytest marker env var, the guard must not skip -- it
+    should only intervene when actually running under pytest."""
+    monkeypatch.delenv('PYTEST_CURRENT_TEST', raising=False)
+    monkeypatch.delenv('PYTEST_VERSION', raising=False)
+    # Should return normally; raises if it unexpectedly tries to skip.
+    _fetchers._skip_pytest_case_requiring_pooch('data/does_not_matter.png')
+
+
 @pytest.mark.thread_unsafe(reason="monkeypatches shared fetcher module state")
 @pytest.mark.skipif(is_wasm, reason="no access to pytest-localserver")
 def test_fetch_without_pooch_uses_stdlib_download(httpserver, tmp_path, monkeypatch):

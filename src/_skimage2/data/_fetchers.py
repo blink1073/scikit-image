@@ -229,7 +229,13 @@ def _skip_pytest_case_requiring_pooch(data_filename):
     # Packagers might use pytest to run the tests suite, but may not
     # want to run it online with pooch as a dependency.
     # As such, we will avoid failing the test, and silently skipping it.
-    if 'PYTEST_CURRENT_TEST' in os.environ:
+    #
+    # `PYTEST_CURRENT_TEST` is only set while a specific test's call/setup/
+    # teardown phase is executing, so it misses module- and class-level data
+    # fetches (e.g. `IMG = data.astronaut()` at import time), which run
+    # during collection. `PYTEST_VERSION` (pytest>=8) is set for the whole
+    # session, including collection, so check both.
+    if 'PYTEST_CURRENT_TEST' in os.environ or 'PYTEST_VERSION' in os.environ:
         # https://docs.pytest.org/en/latest/example/simple.html#pytest-current-test-environment-variable
         import pytest
 
