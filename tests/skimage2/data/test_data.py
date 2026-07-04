@@ -1,11 +1,21 @@
+import hashlib
+from pathlib import Path
+
 import numpy as np
 import _skimage2.data as data
-from _skimage2.data._fetchers import _image_fetcher
+import _skimage2.data._fetchers as _fetchers
+from _skimage2.data._fetchers import (
+    _image_fetcher,
+    _default_data_url,
+    _stdlib_download,
+)
+from _skimage2.data._registry import registry_urls
 from _skimage2 import io
 from _skimage2._shared.testing import (
     assert_equal,
     fetch,
 )
+from _skimage2._shared._dependency_checks import is_wasm
 import os
 import pytest
 
@@ -196,3 +206,79 @@ def test_fetchers_are_public(function_name):
     # Check that the following functions that are only used indirectly in the
     # above tests are public.
     assert hasattr(data, function_name)
+
+
+# --- stdlib urllib fallback (used when pooch is not installed) ---
+
+
+def test_default_data_url_uses_registry_urls():
+    """A file with a registry_urls entry should resolve to that exact URL."""
+    key = next(iter(registry_urls))
+    assert _default_data_url(key) == registry_urls[key]
+
+
+def test_default_data_url_falls_back_to_github_raw():
+    """A file with no registry_urls entry falls back to a GitHub raw URL."""
+    key = 'color/ciede2000_test_data.txt'
+    assert key not in registry_urls
+    url = _default_data_url(key)
+    assert url.startswith('https://github.com/scikit-image/scikit-image/raw/')
+    assert url.endswith(f'/src/_skimage2/{key}')
+
+
+@pytest.mark.skipif(is_wasm, reason="no access to pytest-localserver")
+def test_stdlib_download_success(httpserver, tmp_path):
+    content = b'stdlib fallback test content'
+    expected_hash = hashlib.sha256(content).hexdigest()
+    httpserver.serve_content(content)
+
+    dest_path = tmp_path / 'downloaded.bin'
+    result = _stdlib_download(httpserver.url, str(dest_path), expected_hash)
+
+    assert result == str(dest_path)
+    assert dest_path.read_bytes() == content
+    assert not Path(f'{dest_path}.part').exists()
+
+
+@pytest.mark.skipif(is_wasm, reason="no access to pytest-localserver")
+def test_stdlib_download_hash_mismatch(httpserver, tmp_path):
+    httpserver.serve_content(b'unexpected content')
+    dest_path = tmp_path / 'downloaded.bin'
+
+    with pytest.raises(ValueError, match='Hash mismatch'):
+        _stdlib_download(httpserver.url, str(dest_path), '0' * 64)
+
+    assert not dest_path.exists()
+    assert not Path(f'{dest_path}.part').exists()
+
+
+def test_stdlib_download_connection_error(tmp_path):
+    dest_path = tmp_path / 'downloaded.bin'
+
+    with pytest.raises(ConnectionError):
+        _stdlib_download('http://127.0.0.1:1/unreachable', str(dest_path), '0' * 64)
+
+    assert not dest_path.exists()
+    assert not Path(f'{dest_path}.part').exists()
+
+
+@pytest.mark.thread_unsafe(reason="monkeypatches shared fetcher module state")
+@pytest.mark.skipif(is_wasm, reason="no access to pytest-localserver")
+def test_fetch_without_pooch_uses_stdlib_download(httpserver, tmp_path, monkeypatch):
+    """End-to-end: `_fetch` downloads via urllib when pooch is unavailable."""
+    content = b'stdlib fallback integration test content'
+    expected_hash = hashlib.sha256(content).hexdigest()
+    httpserver.serve_content(content)
+
+    test_key = 'data/_test_stdlib_fallback.bin'
+    monkeypatch.setattr(_fetchers, '_image_fetcher', None)
+    monkeypatch.setattr(
+        _fetchers, '_skip_pytest_case_requiring_pooch', lambda *a, **kw: None
+    )
+    monkeypatch.setitem(_fetchers.registry, test_key, expected_hash)
+    monkeypatch.setitem(_fetchers.registry_urls, test_key, httpserver.url)
+    monkeypatch.setenv('SKIMAGE_DATADIR', str(tmp_path))
+
+    result_path = _fetchers._fetch(test_key)
+
+    assert Path(result_path).read_bytes() == content
