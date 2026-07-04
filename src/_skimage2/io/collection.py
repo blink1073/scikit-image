@@ -178,21 +178,25 @@ class ImageCollection:
 
     Examples
     --------
-    >>> from pathlib import Path
+    >>> import tempfile
     >>> import imageio.v3 as iio3
     >>> import _skimage2.io as io
-    >>> from _skimage2 import data
+    >>> from _skimage2.data import binary_blobs
+    >>> from _skimage2.util import img_as_ubyte
 
-    # Where your images are located
-    >>> data_dir = Path(data.__file__).parent
+    # Save a couple of sample images to load as a collection
+    >>> tmp_dir = tempfile.mkdtemp()
+    >>> for i in range(2):
+    ...     img = img_as_ubyte(binary_blobs((200, 200), 10, rng=i))
+    ...     iio3.imwrite(os.path.join(tmp_dir, f'chess{i}.png'), img)
 
-    >>> coll = io.ImageCollection(str(data_dir / 'chess*.png'))
+    >>> coll = io.ImageCollection(os.path.join(tmp_dir, 'chess*.png'))
     >>> len(coll)
     2
     >>> coll[0].shape
     (200, 200)
 
-    >>> image_col = io.ImageCollection([f'{data_dir}/*.png', '{data_dir}/*.jpg'])
+    >>> image_col = io.ImageCollection([f'{tmp_dir}/*.png', f'{tmp_dir}/*.jpg'])
 
     >>> class MultiReader:
     ...     def __init__ (self, f):
@@ -200,7 +204,9 @@ class ImageCollection:
     ...     def __call__ (self, index):
     ...         return iio3.imread(self.f, index=index)
     ...
-    >>> filename = data_dir / 'no_time_for_that_tiny.gif'
+    >>> frames = np.stack([np.full((10, 10), i, dtype=np.uint8) for i in range(24)])
+    >>> filename = os.path.join(tmp_dir, 'anim.gif')
+    >>> iio3.imwrite(filename, frames)
     >>> ic = io.ImageCollection(range(24), load_func=MultiReader(filename))
     >>> len(ic)
     24
@@ -472,12 +478,15 @@ class MultiImage(ImageCollection):
 
     Examples
     --------
-    >>> from pathlib import Path
-    >>> from _skimage2 import data
+    >>> import tempfile
+    >>> import imageio.v3 as iio3
     >>> from _skimage2.io import ImageCollection
-    >>> data_dir = Path(data.__file__).parent
 
-    >>> multipage_tiff = str(data_dir / 'multipage.tif')
+    # Save a two-frame image to load
+    >>> tmp_dir = tempfile.mkdtemp()
+    >>> frames = np.arange(2 * 15 * 10, dtype=np.uint8).reshape(2, 15, 10)
+    >>> multipage_tiff = os.path.join(tmp_dir, 'multipage.tif')
+    >>> iio3.imwrite(multipage_tiff, frames)
     >>> multi_img = MultiImage(multipage_tiff)
     >>> len(multi_img)  # multi_img contains one element
     1
