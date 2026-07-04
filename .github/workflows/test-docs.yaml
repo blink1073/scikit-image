@@ -37,6 +37,14 @@ jobs:
         run: |
           source .github/scripts/setup-docs-env.sh
 
+      - name: Restore/save Sphinx cache
+        uses: actions/cache@v4
+        with:
+          path: ~/.cache/sphinx
+          key: sphinx-${{ runner.os }}-${{ github.sha }}
+          restore-keys: |
+            sphinx-${{ runner.os }}-
+
       - name: Build docs / run examples
         run: |
           SPHINXCACHE=${HOME}/.cache/sphinx SPHINXOPTS="-W -j auto" make -C doc html

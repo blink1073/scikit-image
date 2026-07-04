@@ -25,7 +25,7 @@ classifiers = [
 ]
 dynamic = ['version']
 dependencies = [
-    'numpy>=2.1',
+    'numpy>=2.1',  # keep in sync with "numpy" matrix version in asv.conf.json
     'scipy>=1.15; sys_platform != "emscripten"',
     'scipy>=1.14; sys_platform == "emscripten"',
     'networkx>=3.0',
