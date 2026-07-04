@@ -218,12 +218,13 @@ def test_default_data_url_uses_registry_urls():
 
 
 def test_default_data_url_falls_back_to_github_raw():
-    """A file with no registry_urls entry falls back to a GitHub raw URL."""
+    """A file with no registry_urls entry falls back to its GitHub raw URL
+    under tests/skimage2/, where these test-only fixtures are committed."""
     key = 'color/ciede2000_test_data.txt'
     assert key not in registry_urls
     url = _default_data_url(key)
     assert url.startswith('https://github.com/scikit-image/scikit-image/raw/')
-    assert url.endswith(f'/src/_skimage2/{key}')
+    assert url.endswith(f'/tests/skimage2/{key}')
 
 
 @pytest.mark.skipif(is_wasm, reason="no access to pytest-localserver")

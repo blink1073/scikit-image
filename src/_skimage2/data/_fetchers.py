@@ -94,9 +94,11 @@ def _stdlib_cache_dir():
 def _default_data_url(data_filename):
     """Resolve the download URL for ``data_filename`` without requiring pooch.
 
-    Uses the explicit GitLab CDN URL from ``registry_urls`` when available,
-    otherwise falls back to the GitHub raw URL for the current version, the
-    same convention the pooch-based fetcher in ``_create_image_fetcher`` uses.
+    Uses the explicit GitLab CDN URL from ``registry_urls`` when available.
+    Every registry entry without one is a test-only fixture committed under
+    ``tests/skimage2/`` rather than shipped in the package, so fall back to
+    its GitHub raw URL there -- the same convention the pooch-based fetcher
+    in ``_create_image_fetcher(prefix='tests')`` uses.
     """
     if data_filename in registry_urls:
         return registry_urls[data_filename]
@@ -108,7 +110,7 @@ def _default_data_url(data_filename):
     ref = 'main' if '+' in version else f'v{version}'
     return (
         f'https://github.com/scikit-image/scikit-image/raw/{ref}/'
-        f'src/_skimage2/{data_filename}'
+        f'tests/skimage2/{data_filename}'
     )
 
 
