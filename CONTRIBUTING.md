@@ -639,7 +639,7 @@ To measure test coverage run:
 $ spin test --coverage
 ```
 
-This will run tests and print a report with one line for each file in 
+This will run tests and print a report with one line for each file in
 {py:obj}`skimage`, detailing the test coverage:
 
 ```
