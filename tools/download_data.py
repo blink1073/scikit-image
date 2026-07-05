@@ -14,6 +14,7 @@ not needed to use the public ``skimage.data`` API.
 """
 
 import argparse
+import ast
 import concurrent.futures
 import hashlib
 import sys
@@ -26,9 +27,29 @@ _REGISTRY_PATH = _HERE.parent / 'src' / '_skimage2' / 'data' / '_registry.py'
 
 
 def _load_registry():
+    """Parse ``registry``/``registry_urls`` out of ``_registry.py``.
+
+    Only evaluates simple top-level ``name = <expr>`` assignments (building
+    up a namespace of just those names as it goes, e.g. so an f-string like
+    ``registry_urls``'s values can reference an already-assigned URL
+    constant) -- any other statement (imports, function/class defs, etc.) is
+    skipped rather than executed, so this keeps working even if the registry
+    module gains code unrelated to the two dicts this script needs.
+    """
     source = _REGISTRY_PATH.read_text()
+    tree = ast.parse(source, filename=str(_REGISTRY_PATH))
+
     namespace = {}
-    exec(compile(source, str(_REGISTRY_PATH), 'exec'), namespace)
+    for node in tree.body:
+        if not (isinstance(node, ast.Assign) and len(node.targets) == 1):
+            continue
+        target = node.targets[0]
+        if not isinstance(target, ast.Name):
+            continue
+        expr = ast.fix_missing_locations(ast.Expression(node.value))
+        code = compile(expr, str(_REGISTRY_PATH), 'eval')
+        namespace[target.id] = eval(code, {'__builtins__': {}}, namespace)  # noqa: S307
+
     return namespace['registry'], namespace['registry_urls']
 
 
@@ -90,6 +111,14 @@ def main(argv=None):
 
     registry, registry_urls = _load_registry()
     skipped = sorted(set(registry) - set(registry_urls))
+    missing_hash = sorted(set(registry_urls) - set(registry))
+    if missing_hash:
+        print(
+            f'WARNING: {len(missing_hash)} registry_urls entr'
+            f'{"y" if len(missing_hash) == 1 else "ies"} with no matching hash '
+            f'in registry, skipping: {", ".join(missing_hash)}',
+            file=sys.stderr,
+        )
 
     args.dest.mkdir(parents=True, exist_ok=True)
 
@@ -98,6 +127,7 @@ def main(argv=None):
         futures = [
             pool.submit(_download_one, key, url, registry[key], args.dest, args.force)
             for key, url in registry_urls.items()
+            if key in registry
         ]
         for future in concurrent.futures.as_completed(futures):
             results.append(future.result())
