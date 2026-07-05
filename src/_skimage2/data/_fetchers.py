@@ -22,6 +22,14 @@ _LEGACY_DATA_DIR = osp.dirname(__file__)
 _DISTRIBUTION_DIR = osp.dirname(_LEGACY_DATA_DIR)
 
 try:
+    # Optional companion package (see gitlab.com/scikit-image/data) that
+    # bundles a curated subset of frequently-used datasets, so they're
+    # available locally without a runtime download.
+    import skimage_data
+except ImportError:
+    skimage_data = None
+
+try:
     from pooch import file_hash
 except ModuleNotFoundError:
     # Function taken from
@@ -301,6 +309,14 @@ def _fetch(data_filename, prefix=None):
         cache_dir = osp.dirname(data_dir)
     else:
         cache_dir = str(_image_fetcher.abspath)
+
+    # Case 0: file is bundled with the optional `scikit-image-data` package
+    if skimage_data is not None:
+        bundled_file_path = osp.join(
+            str(skimage_data.data_dir), osp.basename(data_filename)
+        )
+        if _has_hash(bundled_file_path, expected_hash):
+            return bundled_file_path
 
     # Case 1: the file is already cached in `data_cache_dir`
     cached_file_path = osp.join(cache_dir, data_filename)

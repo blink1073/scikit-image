@@ -301,8 +301,55 @@ def test_fetch_without_pooch_uses_stdlib_download(httpserver, tmp_path, monkeypa
     )
     monkeypatch.setitem(_fetchers.registry, test_key, expected_hash)
     monkeypatch.setitem(_fetchers.registry_urls, test_key, httpserver.url)
-    monkeypatch.setenv('SKIMAGE_DATADIR', str(tmp_path))
+    # `data_dir` is derived once at import time (pooch bakes in
+    # `SKIMAGE_DATADIR` at `pooch.create()` call time), so setting the env
+    # var here would have no effect on the cache directory `_fetch` uses.
+    monkeypatch.setattr(_fetchers, 'data_dir', str(tmp_path / 'data'))
 
     result_path = _fetchers._fetch(test_key)
 
     assert Path(result_path).read_bytes() == content
+    assert Path(result_path) == tmp_path / test_key
+
+
+# --- optional `scikit-image-data` package (bundles a curated data subset) ---
+
+
+@pytest.mark.thread_unsafe(reason="monkeypatches shared fetcher module state")
+def test_fetch_prefers_scikit_image_data_package(tmp_path, monkeypatch):
+    """When installed, `scikit-image-data` is used instead of downloading --
+    and nothing gets written to the download cache for a file it provides."""
+    skimage_data = pytest.importorskip('skimage_data')
+    monkeypatch.setattr(_fetchers._image_fetcher, 'path', tmp_path)
+
+    result_path = _fetchers._fetch('data/astronaut.png')
+
+    assert Path(result_path) == skimage_data.data_dir / 'astronaut.png'
+    assert not (tmp_path / 'data' / 'astronaut.png').exists()
+
+
+@pytest.mark.thread_unsafe(reason="monkeypatches shared fetcher module state")
+@pytest.mark.skipif(is_wasm, reason="no access to pytest-localserver")
+def test_fetch_downloads_file_not_in_scikit_image_data_package(
+    httpserver, tmp_path, monkeypatch
+):
+    """A file `scikit-image-data` doesn't bundle still falls through to a
+    normal download, and ends up cached on disk as usual."""
+    pytest.importorskip('skimage_data')
+    content = b'not bundled in scikit-image-data test content'
+    expected_hash = hashlib.sha256(content).hexdigest()
+    httpserver.serve_content(content)
+
+    test_key = 'data/_test_not_in_scikit_image_data.bin'
+    monkeypatch.setitem(_fetchers.registry, test_key, expected_hash)
+    monkeypatch.setitem(_fetchers.registry_urls, test_key, httpserver.url)
+    # `Pooch.urls` is copied at `pooch.create()` time, unlike `Pooch.registry`
+    # (kept as the same dict object) -- so it needs patching separately.
+    monkeypatch.setitem(_fetchers._image_fetcher.urls, test_key, httpserver.url)
+    monkeypatch.setattr(_fetchers._image_fetcher, 'path', tmp_path)
+
+    result_path = _fetchers._fetch(test_key)
+
+    cached_path = tmp_path / 'data' / '_test_not_in_scikit_image_data.bin'
+    assert Path(result_path) == cached_path
+    assert cached_path.read_bytes() == content
