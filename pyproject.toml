@@ -55,10 +55,12 @@ build = [
     'spin>=0.13',
     'build>=1.2.1',
 ]
-# pooch adds retry/caching support for downloading example datasets.
-# Without it, `skimage.data` falls back to a stdlib `urllib`-based downloader
-# (see `_skimage2/data/_fetchers.py`), so this remains fully optional.
-data = ['pooch>=1.6.0']
+# pooch downloads and caches example datasets on demand. scikit-image-data
+# additionally bundles a curated subset of commonly-used datasets directly,
+# so they work with no download at all. Without either, `skimage.data`
+# raises a clear error for any dataset that isn't already cached or legacy-
+# bundled (see `_skimage2/data/_fetchers.py`); both remain fully optional.
+data = ['pooch>=1.6.0', 'scikit-image-data']
 developer = [
     'pre-commit',
     'ipython',

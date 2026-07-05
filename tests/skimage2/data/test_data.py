@@ -4,12 +4,7 @@ from pathlib import Path
 import numpy as np
 import _skimage2.data as data
 import _skimage2.data._fetchers as _fetchers
-from _skimage2.data._fetchers import (
-    _image_fetcher,
-    _default_data_url,
-    _stdlib_download,
-)
-from _skimage2.data._registry import registry_urls
+from _skimage2.data._fetchers import _image_fetcher
 from _skimage2 import io
 from _skimage2._shared.testing import (
     assert_equal,
@@ -208,61 +203,6 @@ def test_fetchers_are_public(function_name):
     assert hasattr(data, function_name)
 
 
-# --- stdlib urllib fallback (used when pooch is not installed) ---
-
-
-def test_default_data_url_uses_registry_urls():
-    """A file with a registry_urls entry should resolve to that exact URL."""
-    key = next(iter(registry_urls))
-    assert _default_data_url(key) == registry_urls[key]
-
-
-def test_default_data_url_falls_back_to_github_raw():
-    """A file with no registry_urls entry falls back to its GitHub raw URL
-    under tests/skimage2/, where these test-only fixtures are committed."""
-    key = 'color/ciede2000_test_data.txt'
-    assert key not in registry_urls
-    url = _default_data_url(key)
-    assert url.startswith('https://github.com/scikit-image/scikit-image/raw/')
-    assert url.endswith(f'/tests/skimage2/{key}')
-
-
-@pytest.mark.skipif(is_wasm, reason="no access to pytest-localserver")
-def test_stdlib_download_success(httpserver, tmp_path):
-    content = b'stdlib fallback test content'
-    expected_hash = hashlib.sha256(content).hexdigest()
-    httpserver.serve_content(content)
-
-    dest_path = tmp_path / 'downloaded.bin'
-    result = _stdlib_download(httpserver.url, str(dest_path), expected_hash)
-
-    assert result == str(dest_path)
-    assert dest_path.read_bytes() == content
-    assert not Path(f'{dest_path}.part').exists()
-
-
-@pytest.mark.skipif(is_wasm, reason="no access to pytest-localserver")
-def test_stdlib_download_hash_mismatch(httpserver, tmp_path):
-    httpserver.serve_content(b'unexpected content')
-    dest_path = tmp_path / 'downloaded.bin'
-
-    with pytest.raises(ValueError, match='Hash mismatch'):
-        _stdlib_download(httpserver.url, str(dest_path), '0' * 64)
-
-    assert not dest_path.exists()
-    assert not Path(f'{dest_path}.part').exists()
-
-
-def test_stdlib_download_connection_error(tmp_path):
-    dest_path = tmp_path / 'downloaded.bin'
-
-    with pytest.raises(ConnectionError):
-        _stdlib_download('http://127.0.0.1:1/unreachable', str(dest_path), '0' * 64)
-
-    assert not dest_path.exists()
-    assert not Path(f'{dest_path}.part').exists()
-
-
 @pytest.mark.thread_unsafe(reason="mutates process-wide environment variables")
 def test_skip_pytest_case_requiring_pooch_fires_during_collection(monkeypatch):
     """``PYTEST_VERSION`` is set for the whole session (including collection),
@@ -287,29 +227,18 @@ def test_skip_pytest_case_requiring_pooch_noop_outside_pytest(monkeypatch):
 
 
 @pytest.mark.thread_unsafe(reason="monkeypatches shared fetcher module state")
-@pytest.mark.skipif(is_wasm, reason="no access to pytest-localserver")
-def test_fetch_without_pooch_uses_stdlib_download(httpserver, tmp_path, monkeypatch):
-    """End-to-end: `_fetch` downloads via urllib when pooch is unavailable."""
-    content = b'stdlib fallback integration test content'
-    expected_hash = hashlib.sha256(content).hexdigest()
-    httpserver.serve_content(content)
-
-    test_key = 'data/_test_stdlib_fallback.bin'
+def test_fetch_without_pooch_raises_clear_error(monkeypatch):
+    """Without pooch, and without the file being bundled/cached/legacy, `_fetch`
+    must raise a clear `ModuleNotFoundError` rather than attempting a download."""
     monkeypatch.setattr(_fetchers, '_image_fetcher', None)
     monkeypatch.setattr(
         _fetchers, '_skip_pytest_case_requiring_pooch', lambda *a, **kw: None
     )
-    monkeypatch.setitem(_fetchers.registry, test_key, expected_hash)
-    monkeypatch.setitem(_fetchers.registry_urls, test_key, httpserver.url)
-    # `data_dir` is derived once at import time (pooch bakes in
-    # `SKIMAGE_DATADIR` at `pooch.create()` call time), so setting the env
-    # var here would have no effect on the cache directory `_fetch` uses.
-    monkeypatch.setattr(_fetchers, 'data_dir', str(tmp_path / 'data'))
+    test_key = 'data/_test_no_pooch_no_bundle.bin'
+    monkeypatch.setitem(_fetchers.registry, test_key, '0' * 64)
 
-    result_path = _fetchers._fetch(test_key)
-
-    assert Path(result_path).read_bytes() == content
-    assert Path(result_path) == tmp_path / test_key
+    with pytest.raises(ModuleNotFoundError, match='pooch'):
+        _fetchers._fetch(test_key)
 
 
 # --- optional `scikit-image-data` package (bundles a curated data subset) ---

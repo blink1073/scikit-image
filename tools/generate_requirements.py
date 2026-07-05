@@ -95,7 +95,7 @@ def expand_dependencies(
     """
     exploded = []
     for dep in dep_list:
-        if dep.startswith(package_name):
+        if dep.startswith(f'{package_name}['):
             extras = dep.split('[')[1].rstrip(']').split(',')
             exploded.extend(
                 expand_dependencies(
