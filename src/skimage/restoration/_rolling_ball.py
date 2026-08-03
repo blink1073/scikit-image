@@ -13,3 +13,7 @@ __all__ = [
 from skimage._doctest_adapters import adapt_doctests
 
 adapt_doctests(globals())
+
+# Temporary no-op comment: live test of path-scoped auto-benchmarks and
+# the run-benchmark label override against a real PR targeting main
+# (issue #8199) - this line is removed before merge.
