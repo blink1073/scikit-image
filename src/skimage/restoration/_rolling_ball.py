@@ -13,3 +13,6 @@ __all__ = [
 from skimage._doctest_adapters import adapt_doctests
 
 adapt_doctests(globals())
+
+# Temporary no-op comment: live test of the ":bar_chart: run-benchmark"
+# label override (issue #8199) - this line is removed before merge.
