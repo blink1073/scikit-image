@@ -8,6 +8,8 @@ pyx_files = [
   ['_cascade', cython_gen_cpp],
   ['_haar', cython_gen_cpp],
   ['_canny_cy', cython_gen],
+  ['brief_cy', cython_gen],
+  ['_hessian_det_appx', cython_gen],
 ]
 
 foreach pyx_file: pyx_files
@@ -17,40 +19,11 @@ foreach pyx_file: pyx_files
     cpp_args: cython_cpp_args,
     include_directories: ['../../_skimage2/_shared'],
     dependencies: [np_dep],
+    limited_api: limited_api_ver,
     install: true,
     subdir: '_skimage2/feature'
   )
 endforeach
-
-_brief_pythran = custom_target('_brief_pythran',
-  output: ['brief_cy.cpp'],
-  input: 'brief_pythran.py',
-  command: [pythran, '-E', '@INPUT@', '-o', '@OUTPUT@']
-)
-
-py3.extension_module('brief_cy',
-  [_brief_pythran],
-  cpp_args: cpp_args_pythran,
-  include_directories: [incdir_pythran],
-  dependencies: [py3_dep, np_dep],
-  install: true,
-  subdir: '_skimage2/feature'
-)
-
-_hessian_det_appx_pythran = custom_target('_hessian_det_appx_pythran',
-  output: ['_hessian_det_appx.cpp'],
-  input: '_hessian_det_appx_pythran.py',
-  command: [pythran, '-E', '@INPUT@', '-o', '@OUTPUT@']
-)
-
-py3.extension_module('_hessian_det_appx',
-  [_hessian_det_appx_pythran],
-  cpp_args: cpp_args_pythran,
-  include_directories: [incdir_pythran],
-  dependencies: [py3_dep, np_dep],
-  install: true,
-  subdir: '_skimage2/feature'
-)
 
 python_sources = [
   '__init__.py',

@@ -5,11 +5,9 @@ Cython implementation of a binary min heap.
 """
 # cython specific imports
 from libc.stdlib cimport malloc, free
+from libc.math cimport HUGE_VAL
 
-cdef extern from "pyport.h":
-  cnp.float64_t Py_HUGE_VAL
-
-cdef VALUE_T inf = Py_HUGE_VAL
+cdef VALUE_T inf = HUGE_VAL
 
 # this is handy
 cdef inline INDEX_T index_min(INDEX_T a, INDEX_T b) noexcept nogil:

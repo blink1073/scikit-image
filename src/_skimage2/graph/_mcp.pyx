@@ -298,9 +298,9 @@ cdef class MCP:
         # used in the same way for flat indices to move to neighboring points.
         if offsets is None:
             offsets = make_offsets(self.dim, fully_connected)
-        self.offsets = np.array(offsets, dtype=OFFSET_D)
+        self._offsets = np.array(offsets, dtype=OFFSET_D)
         self.flat_offsets = np.array(
-            _ravel_index_fortran(self.offsets, self.costs_shape),
+            _ravel_index_fortran(self._offsets, self.costs_shape),
             dtype=INDEX_D)
 
         # Instead of unraveling each index during the pathfinding algorithm, we
@@ -311,16 +311,26 @@ cdef class MCP:
         # The edge map stores more than a boolean "on some edge" flag so as to
         # allow us to examine the non-out-of-bounds neighbors for a given edge
         # point while excluding the neighbors which are outside the array.
-        pos, neg = _offset_edge_map(costs.shape, self.offsets)
+        pos, neg = _offset_edge_map(costs.shape, self._offsets)
         self.flat_pos_edge_map = pos.reshape((self.dim, size), order='F')
         self.flat_neg_edge_map = neg.reshape((self.dim, size), order='F')
 
 
         # The offset lengths are the distances traveled along each offset
-        self.offset_lengths = np.sqrt(np.sum((sampling * self.offsets)**2,
+        self.offset_lengths = np.sqrt(np.sum((sampling * self._offsets)**2,
                                       axis=1)).astype(FLOAT_D)
         self.dirty = 0
         self.use_start_cost = 1
+
+    property offsets:
+        """The array of n-d offsets used to traverse the costs array.
+
+        This is the offset array provided to the constructor, or the array
+        constructed when no offsets were given. The traceback array returned by
+        :meth:`find_costs` holds indices into this array.
+        """
+        def __get__(self):
+            return self._offsets
 
 
     def _reset(self):
@@ -485,7 +495,7 @@ cdef class MCP:
         cdef OFFSETS_INDEX_T[:] traceback_offsets = self.traceback_offsets
         cdef EDGE_T[:, :] flat_pos_edge_map = self.flat_pos_edge_map
         cdef EDGE_T[:, :] flat_neg_edge_map = self.flat_neg_edge_map
-        cdef OFFSET_T[:, :] offsets = self.offsets
+        cdef OFFSET_T[:, :] offsets = self._offsets
         cdef INDEX_T[:] flat_offsets = self.flat_offsets
         cdef FLOAT_T[:] offset_lengths = self.offset_lengths
 
@@ -677,7 +687,7 @@ cdef class MCP:
 
         # Short names for arrays
         cdef OFFSETS_INDEX_T [:] traceback_offsets = self.traceback_offsets
-        cdef OFFSET_T [:,:] offsets = self.offsets
+        cdef OFFSET_T [:,:] offsets = self._offsets
         cdef INDEX_T [:] flat_offsets = self.flat_offsets
         # New array
         cdef INDEX_T [:] position = np.array(ends[0], dtype=INDEX_D)
@@ -733,7 +743,7 @@ cdef class MCP_Geometric(MCP):
         See class documentation.
         """
         MCP.__init__(self, costs, offsets, fully_connected, sampling)
-        if np.absolute(self.offsets).max() > 1:
+        if np.absolute(self._offsets).max() > 1:
             raise ValueError('all offset components must be 0, 1, or -1')
         self.use_start_cost = 0
 

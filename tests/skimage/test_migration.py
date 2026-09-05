@@ -431,7 +431,7 @@ SKIMAGE_FILE_TREE = {
     'feature/_daisy',
     'feature/_fisher_vector',
     'feature/_haar',
-    'feature/_hessian_det_appx_pythran',
+    'feature/_hessian_det_appx',
     'feature/_hog',
     'feature/_hoghistogram',
     'feature/_orb_descriptor_positions',
@@ -439,7 +439,7 @@ SKIMAGE_FILE_TREE = {
     'feature/_texture',
     'feature/blob',
     'feature/brief',
-    'feature/brief_pythran',
+    'feature/brief_cy',
     'feature/censure',
     'feature/censure_cy',
     'feature/corner',
@@ -646,10 +646,7 @@ SKIMAGE_FILE_TREE_IGNORE = {
 
 
 # Compiled to modules with a different name
-SKIMAGE_COMPILED_FILES = {
-    'feature/_hessian_det_appx_pythran': 'feature/_hessian_det_appx',
-    'feature/brief_pythran': 'feature/brief_cy',
-}
+SKIMAGE_COMPILED_FILES = {}
 
 
 def _walk_python_files(package_path, *, root=None):
