@@ -29,21 +29,22 @@ if is_windows
   endif
 endif
 
-# When cross-compiling skimage, the compiler needs access to NumPy headers for
-# the host platform (where the package will actually run). These headers may be
-# incompatible with any corresponding headers that might be installed on the
-# build system (where the compilation is performed). To make sure that the
-# compiler finds the right headers, paths can be configured in the 'properties'
-# section of a Meson cross file:
+# When cross-compiling skimage, the compiler needs access to NumPy and Pythran
+# headers for the host platform (where the package will actually run). These
+# headers may be incompatible with any corresponding headers that might be
+# installed on the build system (where the compilation is performed). To make
+# sure that the compiler finds the right headers, paths can be configured in
+# the 'properties' section of a Meson cross file:
 #
 #   [properties]
 #   numpy-include-dir = '/path/to/host/numpy/includes'
+#   pythran-include-dir = '/path/to/host/pythran/includes'
 #
-# If a cross file is not provided or does not specify this property, fall back
-# to running Python on the build system to query NumPy directly for the
-# appropriate path. This will detect appropriate paths for native builds. (This
-# might even work for certain build/host cross combinations, but don't rely on
-# that.)
+# If a cross file is not provided or does not specify either of these
+# properties, fall back to running Python on the build system to query NumPy or
+# Pythran directly for the appropriate paths. This will detect appropriate
+# paths for native builds. (This might even work for certain build/host cross
+# combinations, but don't rely on that.)
 #
 # For more information about cross compilation in Meson, including a definition
 # of "build" and "host" in this context, refer to
@@ -79,6 +80,28 @@ np_dep = declare_dependency(
 )
 
 cc = meson.get_compiler('c')
+
+# Pythran include directory
+incdir_pythran = meson.get_external_property('pythran-include-dir', 'not-given')
+if incdir_pythran == 'not-given'
+  # If not specified, try to query Pythran from the build python
+  incdir_pythran = run_command(py3,
+    [
+      '-c',
+      'import os; os.chdir(".."); import pythran; print(os.path.dirname(pythran.__file__));'
+    ],
+    check: true
+  ).stdout().strip()
+endif
+
+inc_pythran = include_directories(incdir_pythran)
+
+# Pythran build flags
+cpp_args_pythran = [
+  '-DENABLE_PYTHON_MODULE',
+  '-D__PYTHRAN__=3',
+  '-DPYTHRAN_BLAS_NONE'
+]
 
 # Free-threaded CPython builds (cp3??t) do not support the stable ABI: the
 # headers refuse to compile with Py_LIMITED_API on 3.14 and earlier, and abi3t

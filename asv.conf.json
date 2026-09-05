@@ -15,6 +15,7 @@
     "matrix": {
          "virtualenv": [],
          "cython": [],
+         "pythran": [],
          "numpy": ["2.5"],
          "scipy": [],
          "pooch": []

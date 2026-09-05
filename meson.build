@@ -57,6 +57,7 @@ if not cc.links('', name: '-Wl,--version-script', args: ['-shared', version_link
 endif
 
 cython = find_program('cython')
+pythran = find_program('pythran')
 tempita = files('src/_skimage2/_build_utils/tempita.py')
 copier = find_program(['cp', 'src/_skimage2/_build_utils/copyfiles.py'])
 
