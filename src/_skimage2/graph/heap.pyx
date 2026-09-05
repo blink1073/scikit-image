@@ -274,8 +274,8 @@ cdef class BinaryHeap:
         values[i2] = inf
 
         # update
-        self.count -= 1
         count -= 1
+        self.count = count
         if (levels > self.min_levels) and (count < (1 << (levels-2))):
             self._add_or_remove_level(-1)
         else:
@@ -297,13 +297,18 @@ cdef class BinaryHeap:
             self._add_or_remove_level(1)
             levels += 1
 
+        # Bind the (possibly reallocated) arrays to locals for fast access;
+        # under the limited API this avoids a per-element attribute accessor call.
+        cdef VALUE_T *values = self._values
+        cdef REFERENCE_T *references = self._references
+
         # insert new value
         cdef INDEX_T i = ((1 << levels) - 1) + count  # LevelStart + n
-        self._values[i] = value
-        self._references[count] = reference
+        values[i] = value
+        references[count] = reference
 
         # update
-        self.count += 1
+        self.count = count + 1
         self._update_one(i)
 
         # return
@@ -317,6 +322,7 @@ cdef class BinaryHeap:
         """
         # shorter name for values
         cdef VALUE_T *values = self._values
+        cdef REFERENCE_T *references = self._references
 
         # init index. start at 1 because we start in level 1
         cdef LEVELS_T _level
@@ -339,7 +345,7 @@ cdef class BinaryHeap:
         cdef INDEX_T ir = i - ((1 << levels) - 1) # (2**self.levels-1)
                                                   # LevelStart
         cdef VALUE_T value = values[i]
-        self._popped_ref = self._references[ir]
+        self._popped_ref = references[ir]
 
         # remove it
         if self.count:
@@ -539,8 +545,8 @@ cdef class FastUpdateBinaryHeap(BinaryHeap):
         values[i2] = inf
 
         # update
-        self.count -= 1
         count -= 1
+        self.count = count
         if (levels > self.min_levels) & (count < (1 << (levels-2))):
             self._add_or_remove_level(-1)
         else:
@@ -562,6 +568,7 @@ cdef class FastUpdateBinaryHeap(BinaryHeap):
 
         # init variable to store the index-in-the-heap
         cdef INDEX_T i
+        cdef VALUE_T *values
 
         # Reference is the index in the array where MCP is applied to.
         # Find the index-in-the-heap using the crossref array.
@@ -569,8 +576,9 @@ cdef class FastUpdateBinaryHeap(BinaryHeap):
 
         if ir != -1:
             # update
+            values = self._values
             i = (1 << self.levels) - 1 + ir
-            self._values[i] = value
+            values[i] = value
             self._update_one(i)
             return ir
 
