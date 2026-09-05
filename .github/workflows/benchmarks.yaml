@@ -135,15 +135,16 @@ jobs:
           echo "Baseline: $BASELINE_SHA ($BASELINE_LABEL)"
           echo "Contender: $GITHUB_SHA"
 
-          # Optional benchmark scope
-          BENCH_ARGS=""
+          # Optional benchmark scope (use a bash array so the value is a single,
+          # correctly-quoted argument to asv)
+          BENCH_ARGS=()
           if [ -n "$BENCHMARK_SCOPE" ]; then
-            BENCH_ARGS="--bench \"$BENCHMARK_SCOPE\""
+            BENCH_ARGS=(--bench "$BENCHMARK_SCOPE")
           fi
 
           # Run benchmarks for current commit against base
-          ASV_OPTIONS="--split --show-stderr --factor $ASV_FACTOR $BENCH_ARGS"
-          asv continuous $ASV_OPTIONS $BASELINE_SHA $GITHUB_SHA \
+          ASV_OPTIONS="--split --show-stderr --factor $ASV_FACTOR"
+          asv continuous $ASV_OPTIONS "${BENCH_ARGS[@]}" $BASELINE_SHA $GITHUB_SHA \
               | sed "/Traceback \|failed$\|PERFORMANCE DECREASED/ s/^/::error::/" \
               | tee benchmarks.log
 
