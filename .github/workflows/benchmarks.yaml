@@ -50,6 +50,7 @@ jobs:
         name: Install Python
         with:
           python-version: "${{ inputs.python_version || '3.12' }}"
+          allow-prereleases: true
           cache: "pip"
           cache-dependency-path: "requirements/*.txt"
 
