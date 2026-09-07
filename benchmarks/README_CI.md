@@ -6,9 +6,9 @@
 
 ## How it works
 
-The `asv` suite runs automatically on every PR, scoped to whichever benchmark module(s) cover the `skimage` subpackage(s) touched (see `.github/scripts/resolve-benchmark-params.py`). A PR touching only `skimage/restoration/` runs just `benchmark_restoration.py`; a PR touching no mapped subpackage runs none. A label whose name contains `benchmark` (e.g. `run-benchmark`) overrides this and runs the full suite, for changes to shared code that could affect benchmarks outside the touched subpackage.
+The `asv` suite runs automatically on every PR, scoped to whichever benchmark module(s) cover the `skimage` subpackage(s) touched (see `.github/scripts/resolve-benchmark-params.py`). A PR touching only `skimage/restoration/` runs just `benchmark_restoration.py`; a PR touching no mapped subpackage runs none. A label whose name contains `benchmark` (e.g. `run-benchmark`) overrides this and runs the full suite, for changes to shared code that could affect benchmarks outside the touched subpackage. Adding `full` to that name too (e.g. `run-benchmark-full`) also switches to the nightly's profile: slow benchmarks included, full parameter matrices.
 
-The suite also runs nightly at 07:00 UTC against `main` (see "Full nightly runs" below), and can be triggered manually from the `workflow_dispatch` entry point on the `Actions` tab. `workflow_dispatch` offers a `baseline` choice: `parent-commit` (default) or `previous-nightly`, falling back to the immediate parent if no nightly run has succeeded yet. Merges to `main` don't trigger a run on their own; the nightly run covers that ground without the CI cost of running on every merge. A failing nightly or dispatched run on `main`, including a detected regression, opens or updates a `CI failure`-labeled issue, the same convention the repo's other main-branch checks use.
+The suite also runs nightly at 07:00 UTC against `main` (see "Full nightly runs" below), and can be triggered manually from the `workflow_dispatch` entry point on the `Actions` tab. `workflow_dispatch` offers a `baseline` choice: `parent-commit` (default) or `previous-nightly`, falling back to the immediate parent if no nightly run has succeeded yet, and a `profile` choice: `fast` (default) or `full`. Merges to `main` don't trigger a run on their own; the nightly run covers that ground without the CI cost of running on every merge. A failing nightly or dispatched run on `main`, including a detected regression, opens or updates a `CI failure`-labeled issue, the same convention the repo's other main-branch checks use.
 
 `asv continuous` runs a relative performance measurement: no state is saved, and a regression is only a ratio, since we don't have stable hardware over time to make absolute numbers meaningful.
 
@@ -36,7 +36,7 @@ The benchmark job splits along that seam: `prepare-benchmarks.sh` handles everyt
 ## Running the benchmarks on GitHub Actions
 
 1. Opening or updating a PR that touches a mapped subpackage runs that module's benchmarks automatically. Checks appear above the comment box.
-2. A label whose name contains `benchmark` (e.g. `run-benchmark`) forces the full suite, and stays in effect for that PR's later runs too.
+2. A label whose name contains `benchmark` (e.g. `run-benchmark`) forces the full suite, and stays in effect for that PR's later runs too. Add `full` to the name (e.g. `run-benchmark-full`) for the nightly's profile instead of the PR default.
 3. Filter the `Actions` tab for [`workflow:Benchmark`](https://github.com/scikit-image/scikit-image/actions?query=workflow%3ABenchmark); your username is the `actor`.
 
 ## Full nightly runs

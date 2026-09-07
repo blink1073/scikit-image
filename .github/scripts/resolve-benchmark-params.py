@@ -57,6 +57,8 @@ FAST_PROFILE = {
 # matrices included.
 FULL_PROFILE = {**FAST_PROFILE, "ASV_SKIP_SLOW": "0", "ASV_FULL_PARAMS": "1"}
 
+PROFILES = {"fast": FAST_PROFILE, "full": FULL_PROFILE}
+
 
 def run(*args: str) -> str:
     """Stdout of a command that must succeed.
@@ -126,14 +128,14 @@ def baseline_or_parent(candidate: str, github_sha: str) -> str:
     return run("git", "rev-parse", f"{github_sha}~1")
 
 
-def has_benchmark_label(pr_number: int) -> bool:
-    """Whether the PR asks for the full suite by label.
+def benchmark_labels(pr_number: int) -> list[str]:
+    """Label names containing "benchmark".
 
     Read live rather than from the trigger payload, so re-running after
-    adding the label picks up the new state.
+    adding one picks up the new state.
     """
     labels = json.loads(run("gh", "pr", "view", str(pr_number), "--json", "labels"))
-    return any("benchmark" in label["name"].lower() for label in labels["labels"])
+    return [l["name"] for l in labels["labels"] if "benchmark" in l["name"].lower()]
 
 
 def bench_filter_for_changes(base_sha: str, head_sha: str) -> str:
@@ -160,17 +162,24 @@ def resolve_pull_request(event: dict, github_sha: str) -> Resolution:
     """Head against base, scoped to the subpackages touched.
 
     A benchmark label runs everything instead, since a change to shared
-    code can move benchmarks outside the subpackage it lives in.
+    code can move benchmarks outside the subpackage it lives in. A label
+    also naming "full" (e.g. "run-benchmark-full") picks FULL_PROFILE.
     """
     pull_request = event["pull_request"]
     base_sha = pull_request["base"]["sha"]
+    labels = benchmark_labels(pull_request["number"])
+    profile = (
+        PROFILES["full"]
+        if any("full" in name.lower() for name in labels)
+        else PROFILES["fast"]
+    )
     resolution = Resolution(
         baseline_sha=base_sha,
         baseline_label=pull_request["base"]["label"],
         contender_label=pull_request["head"]["label"],
-        profile=FAST_PROFILE,
+        profile=profile,
     )
-    if has_benchmark_label(pull_request["number"]):
+    if labels:
         return resolution
 
     resolution.bench_filter = bench_filter_for_changes(
@@ -193,11 +202,13 @@ def resolve_schedule(event: dict, github_sha: str) -> Resolution:
 
 def resolve_workflow_dispatch(event: dict, github_sha: str) -> Resolution:
     """The parent commit, or the last nightly's, per the dispatch input."""
-    if event.get("inputs", {}).get("baseline") == "previous-nightly":
+    inputs = event.get("inputs", {})
+    if inputs.get("baseline") == "previous-nightly":
         baseline_sha = baseline_or_parent(last_nightly_sha(), github_sha)
     else:
         baseline_sha = run("git", "rev-parse", f"{github_sha}~1")
-    return Resolution.between_shas(baseline_sha, github_sha, FAST_PROFILE)
+    profile = PROFILES.get(inputs.get("profile"), PROFILES["fast"])
+    return Resolution.between_shas(baseline_sha, github_sha, profile)
 
 
 RESOLVERS = {

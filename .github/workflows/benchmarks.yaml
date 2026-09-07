@@ -17,6 +17,14 @@ on:
         options:
           - parent-commit
           - previous-nightly
+      profile:
+        description: "Benchmark profile"
+        required: false
+        type: choice
+        default: fast
+        options:
+          - fast
+          - full
 
 concurrency:
   # Cancel previous workflows of the same PR, but only for PRs
