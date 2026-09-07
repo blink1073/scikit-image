@@ -1,14 +1,13 @@
 #!/usr/bin/env python3
 """Resolve what the benchmark workflow compares, and how.
 
-One resolver per trigger event. main() writes three values to
-$GITHUB_OUTPUT for the jobs that start before benchmarking, and the asv
-settings to benchmark-params.json for the benchmark job.
-benchmarks/README_CI.md describes the flow around this.
+One resolver per trigger event. main() writes the values the build
+jobs need to $GITHUB_OUTPUT, and the asv settings to
+benchmark-params.json. benchmarks/README_CI.md describes the flow.
 
 Expects GITHUB_EVENT_NAME, GITHUB_SHA, GITHUB_REPOSITORY,
-GITHUB_EVENT_PATH, GITHUB_OUTPUT, and GH_TOKEN (the nightly baseline
-lookup needs `actions: read`).
+GITHUB_EVENT_PATH, GITHUB_OUTPUT, and GH_TOKEN (`actions: read` for
+the nightly baseline lookup).
 """
 
 import json
@@ -18,12 +17,14 @@ from dataclasses import dataclass
 
 PARAMS_FILE = "benchmark-params.json"
 ASV_CONF_FILE = "asv.conf.json"
-SOURCE_DIR = "src/skimage"
+# All three package trees: src/skimage (legacy adapter), src/_skimage2
+# (implementations it re-exports), src/skimage2 (new public namespace).
+# Subpackage names line up across them, so MODULE_MAP covers all three.
+SOURCE_DIRS = ("src/skimage", "src/_skimage2", "src/skimage2")
 
-# Which benchmark modules cover each SOURCE_DIR subpackage. Subpackages
-# absent here (color, data, draw, future, io) have no benchmarks, and
-# benchmark_import_time covers the whole package rather than one
-# subpackage, so neither scopes a run.
+# Which benchmark modules cover each subpackage. Unmapped subpackages
+# (color, data, draw, future, io) have no benchmarks, and
+# benchmark_import_time covers the whole package; neither scopes a run.
 MODULE_MAP = {
     "exposure": ["benchmark_exposure"],
     "feature": ["benchmark_feature", "benchmark_peak_local_max"],
@@ -43,9 +44,8 @@ MODULE_MAP = {
     "util": ["benchmark_util"],
 }
 
-# Trimmed run for pull requests and manual dispatches: slow benchmarks
-# skipped and reduced parameter matrices. ASV_FACTOR is asv's own
-# default, not overridden.
+# Trimmed for PRs and manual dispatches: slow benchmarks skipped and
+# reduced parameter matrices. ASV_FACTOR is asv's own default.
 FAST_PROFILE = {
     "ASV_FACTOR": "1.1",
     "ASV_PROCESSES": "2",
@@ -95,8 +95,8 @@ class Resolution:
 
     @classmethod
     def between_shas(cls, baseline_sha: str, contender_sha: str, profile: dict):
-        """A resolution labelled by SHA, for the events that run off a
-        branch and so have no base/head labels to show instead.
+        """A resolution labelled by SHA, for events running off a branch
+        with no base/head labels to show.
         """
         return cls(baseline_sha, baseline_sha, contender_sha, profile)
 
@@ -114,8 +114,8 @@ def last_nightly_sha() -> str:
 
 
 def baseline_or_parent(candidate: str, github_sha: str) -> str:
-    """candidate, falling back to the parent commit when it's missing
-    locally, as when no nightly has succeeded yet.
+    """candidate, or the parent commit when candidate isn't available
+    locally (no nightly has succeeded yet).
     """
     if candidate:
         found = subprocess.run(
@@ -129,9 +129,7 @@ def baseline_or_parent(candidate: str, github_sha: str) -> str:
 
 
 def benchmark_labels(pr_number: int) -> list[str]:
-    """Label names containing "benchmark".
-
-    Read live rather than from the trigger payload, so re-running after
+    """Label names containing "benchmark", read live so a re-run after
     adding one picks up the new state.
     """
     labels = json.loads(run("gh", "pr", "view", str(pr_number), "--json", "labels"))
@@ -139,20 +137,19 @@ def benchmark_labels(pr_number: int) -> list[str]:
 
 
 def bench_filter_for_changes(base_sha: str, head_sha: str) -> str:
-    """An asv -b regex covering the subpackages changed between two
-    commits, or empty if none were.
-
-    Paths under a subpackage MODULE_MAP doesn't list, or outside
-    SOURCE_DIR entirely, contribute nothing: they neither force nor
-    block a run.
+    """An asv -b regex covering the subpackages a branch changed, or
+    empty if none. Diffed from the merge base, so a branch behind main
+    isn't credited with reverting commits merged since it branched.
+    Unmapped or out-of-tree paths neither force nor block a run.
     """
     changed = run(
-        "git", "diff", "--name-only", base_sha, head_sha, "--", SOURCE_DIR
+        "git", "diff", "--name-only", f"{base_sha}...{head_sha}", "--", *SOURCE_DIRS
     ).splitlines()
 
     modules = []
     for pkg, pkg_modules in MODULE_MAP.items():
-        if any(path.startswith(f"{SOURCE_DIR}/{pkg}/") for path in changed):
+        prefixes = tuple(f"{source_dir}/{pkg}/" for source_dir in SOURCE_DIRS)
+        if any(path.startswith(prefixes) for path in changed):
             modules.extend(pkg_modules)
 
     return f"^({'|'.join(modules)})\\." if modules else ""
@@ -231,8 +228,8 @@ def write_outputs(resolution: Resolution) -> None:
 
 
 def write_params(resolution: Resolution) -> None:
-    """Hand the benchmark job its asv settings, keyed by the variable
-    name each is exported as so unpacking is a straight copy.
+    """Hand the benchmark job its asv settings, keyed by env-var name
+    so unpacking is a straight copy.
     """
     params = {
         **resolution.profile,
