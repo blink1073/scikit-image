@@ -24,6 +24,7 @@ jobs:
       CCACHE_COMPRESSLEVEL: 6
       CCACHE_MAXSIZE: 400M
       CCACHE_SLOPPINESS: "pch_defines,time_macros"
+      PYTHON_VERSION: "${{ inputs.python-version }}"
 
     steps:
       - name: Checkout scikit-image
@@ -64,7 +65,14 @@ jobs:
 
       - name: Build wheel
         run: |
-          python -m build --no-isolation --skip-dependency-check -Csetup-args="-Doptimization=2"
+          setup_args=("-Csetup-args=-Doptimization=2")
+          # Free-threaded builds cannot target the stable ABI (abi3) that the
+          # project builds by default, so disable the limited API to let them
+          # build as version-specific wheels.
+          if [[ "$PYTHON_VERSION" == *"t" ]]; then
+            setup_args+=("-Csetup-args=-Dpython.allow_limited_api=false")
+          fi
+          python -m build --no-isolation --skip-dependency-check "${setup_args[@]}"
 
       - name: ccache statistics
         if: always()

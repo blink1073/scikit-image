@@ -103,6 +103,26 @@ cpp_args_pythran = [
   '-DPYTHRAN_BLAS_NONE'
 ]
 
+# Free-threaded CPython builds (cp3??t) do not support the stable ABI: the
+# headers refuse to compile with Py_LIMITED_API on 3.14 and earlier, and abi3t
+# is only available from 3.15 (and still requires toolchain support). Detect a
+# free-threaded build interpreter and, in that case, skip `limited_api` so the
+# extensions are built as regular version-specific wheels.
+free_threaded = run_command(
+  py3,
+  [
+    '-c',
+    'import sysconfig; print(1 if sysconfig.get_config_var("Py_GIL_DISABLED") else 0)'
+  ],
+  check: true
+).stdout().strip() == '1'
+
+if free_threaded
+  limited_api_ver = ''
+else
+  limited_api_ver = '3.12'
+endif
+
 # Deal with M_PI & friends; add `use_math_defines` to c_args
 # Cython doesn't always get this correctly itself
 # explicitly add the define as a compiler flag for Cython-generated code.
