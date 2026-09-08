@@ -132,6 +132,9 @@ requires = [
     'numpy>=2.0',
 ]
 
+[tool.meson-python]
+limited-api = true
+
 [tool.spin]
 package = 'skimage'
 
@@ -284,11 +287,6 @@ build-verbosity = 0
 # Could be overwritten using CIBW_CONFIG_SETTINGS environment variable
 
 [[tool.cibuildwheel.overrides]]
-select = "cp3??t-*"
-test-environment = {PYTHON_GIL=0}
-test-extras = ["test", "optional_free_threaded"]
-
-[[tool.cibuildwheel.overrides]]
 select = "*-m*linux_aarch64"
 test-extras = ["test", "optional_free_threaded"]
 
@@ -300,13 +298,6 @@ test-extras = ["test", "optional_free_threaded"]
 select = "*-musllinux*"
 test-extras = ["test", "optional_free_threaded"]
 # SimpleITK does not support musllinux yet
-
-[[tool.cibuildwheel.overrides]]
-select = "cp315*"
-# scikit-learn, matplotlib, PyWavelets, and astropy have no cp315 wheels yet,
-# so the `optional` and `optional_free_threaded` extras cannot be installed.
-# Drop this override once they publish for 3.15.
-test-extras = ["test"]
 
 [tool.cibuildwheel.linux]
 environment = {PIP_PREFER_BINARY=1, SKIMAGE_LINK_FLAGS="-Wl,--strip-debug"}
