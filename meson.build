@@ -1,9 +1,7 @@
 project(
   'scikit-image',
   'c', 'cpp', 'cython',
-  # Note that the git commit hash cannot be added dynamically here
-  # That only happens when importing from a git repository.
-  # See `src/skimage/__init__.py`
+  # Defined in `src/_skimage2/_version.py`, which also adds git info.
   version: run_command('src/_skimage2/_build_utils/version.py', check: true).stdout().strip(),
   license: 'BSD-3',
   meson_version: '>= 1.5.0',
@@ -11,6 +9,10 @@ project(
     'buildtype=debugoptimized',
     'c_std=c17',
     'cpp_std=c++17',
+    # The limited API (abi3) is opt-in; abi3 wheel builds pass
+    # `-Dpython.allow_limited_api=true`. See the meson-python limited-API guide:
+    # https://meson-python.readthedocs.io/en/latest/how-to-guides/limited-api.html
+    'python.allow_limited_api=false',
   ],
 )
 
